@@ -15,6 +15,7 @@
 #include <variant>
 #include "../RenderDll/Common/CryNameR.h"
 #include "CryCore/Containers/CryArray.h"
+#include "NsMath/Matrix.h"
 
 using namespace Cry;
 using namespace Ns::LayoutDefinitions;
@@ -241,7 +242,7 @@ void Ns::CRenderDevice::DrawBatch(const Noesis::Batch& batch)
 
 	bufferParams.inputLayout = info.layout;
 	bufferParams.inputSize		= batch.numVertices;
-	bufferParams.inputOffset = 0;//batch.vertexOffset + m_pCurrentView->vtxBufferDrawPos;
+	bufferParams.inputOffset = m_pCurrentView->vtxBufferDrawPos; //batch.vertexOffset + 
 	bufferParams.inputStride = g_layoutInfoList[batch.shader.v].stride;
 
 	bufferParams.idxSize = batch.numIndices;
@@ -561,7 +562,10 @@ void Cry::Ns::CRenderDevice::RT_AddView(SViewInitParams viewParams)
 	passParams.pColorTarget = pViewData->viewColorTarget;
 	passParams.pDepthsTarget = pViewData->viewDepthTarget;
 	passParams.viewPort = SRenderViewport(0, 0, viewParams.width, viewParams.height);
+	passParams.clearMask = BIT(2);
 
+	pViewData->viewWidth = viewParams.width;
+	pViewData->viewHeight = viewParams.height;
 	pViewData->viewPass = m_pPipeline->RT_AllocatePass(*pStage, passParams);
 
 
@@ -592,9 +596,11 @@ void Cry::Ns::CRenderDevice::RT_AddView(SViewInitParams viewParams)
 void Cry::Ns::CRenderDevice::RT_RenderView(SPerViewRenderData* pViewData, Renderer::Pipeline::StageRenderArguments& args)
 {
 	auto pRenderer = pViewData->view->GetRenderer();
-	if (pRenderer->UpdateRenderTree())
+	pRenderer->UpdateRenderTree();
+	//if ()
 	{
 		m_pCurrentView = pViewData;
+
 		pRenderer->RenderOffscreen();
 		pRenderer->Render();
 

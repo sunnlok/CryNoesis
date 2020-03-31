@@ -55,7 +55,7 @@ static void LoadXamlCmd(IConsoleCmdArgs* pArgs)
 	if (!g_pImplementation && pArgs->GetArgCount() < 2)
 		return;
 
-	g_pImplementation->CreateView(pArgs->GetArg(1), { 500,500 });
+	g_pImplementation->CreateView(pArgs->GetArg(1), { gEnv->pRenderer->GetWidth(), gEnv->pRenderer->GetHeight() });
 }
 
 
@@ -102,7 +102,7 @@ void Cry::Ns::CImplementation::Init()
 
 void Cry::Ns::CImplementation::Update(float delta)
 {
-	m_lastFrameDelta = delta;
+	m_lastFrameDelta += delta;
 
 
 }
