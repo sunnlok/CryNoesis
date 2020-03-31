@@ -1,5 +1,4 @@
-#H1
-Cry-Noesis
+# Cry-Noesis
 
 
 Implementation of Noesis GUI for cryengine.
