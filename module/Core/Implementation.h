@@ -29,6 +29,7 @@ namespace Ns
 		std::vector<Noesis::Ptr<Noesis::IView>> m_views;
 
 		Noesis::Ptr<CRenderDevice> m_pRenderDevice;
+		CTimeValue m_startTime;
 	};
 }
 }

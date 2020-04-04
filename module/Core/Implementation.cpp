@@ -83,7 +83,7 @@ Cry::Ns::CImplementation::CImplementation()
 	}	
 	const char* fonts[] = { "./#PT Root UI", "Arial", "Segoe UI Emoji" };
 	GUI::LoadApplicationResources("NocturnalStyle.xaml");
-	Noesis::GUI::SetFontFallbacks({ fonts, 3 });
+	Noesis::GUI::SetFontFallbacks( fonts, 3 );
 	Noesis::GUI::SetFontDefaultProperties(15, FontWeight_Normal, FontStretch_Normal, FontStyle_Normal);
 }
 
@@ -96,30 +96,22 @@ Cry::Ns::CImplementation::~CImplementation()
 void Cry::Ns::CImplementation::Init()
 {
 	
-
+	m_startTime = gEnv->pTimer->GetFrameStartTime();
 	m_pRenderDevice = Noesis::MakePtr<Ns::CRenderDevice>();
 }
 
 void Cry::Ns::CImplementation::Update(float delta)
 {
-	m_lastFrameDelta += delta;
-
 
 }
 
 void Cry::Ns::CImplementation::UpdateBeforeRender()
 {
+	auto curTime = gEnv->pTimer->GetFrameStartTime() - m_startTime;
+
+
 	for (auto& view : m_views)
-		view->Update(m_lastFrameDelta);
-
-	auto pText = gEnv->pRenderer->EF_GetTextureByName("Noesis_View0_MainPass_Color");
-
-	if (pText)
-		IRenderAuxImage::Draw2dImage(
-		0,
-		0,
-		(float)pText->GetWidth(), (float)pText->GetHeight(),
-			pText->GetTextureID(), 0, 1.0f, 1.0f, 0);
+		view->Update(curTime.GetSeconds());
 }
 
 bool Cry::Ns::CImplementation::CreateView(const char* xamlPath, Vec2i dimensions)

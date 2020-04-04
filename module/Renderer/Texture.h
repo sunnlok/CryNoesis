@@ -9,7 +9,7 @@ namespace Cry
 	namespace Ns
 	{
 
-		class CTextureWrapper final : public Noesis::Texture
+		class CTextureWrapper final : public ::Noesis::Texture
 		{
 		public:
 			CTextureWrapper() = default;
@@ -35,18 +35,26 @@ namespace Cry
 			_smart_ptr<ITexture> m_pTexture = nullptr;
 		};
 
-		class CRenderTarget final : public Noesis::RenderTarget
+		class CRenderTarget final : public ::Noesis::RenderTarget
 		{
 		public:
 			CRenderTarget() = default;
 			virtual ~CRenderTarget() = default;
 
-			CRenderTarget(ITexture* pTexture);
-			CRenderTarget(_smart_ptr<ITexture> pTexture);
+			CRenderTarget(ITexture* pColor, ITexture* pDepth);
+			CRenderTarget(_smart_ptr<ITexture> pColor, _smart_ptr<ITexture> pDepth);
 
-			virtual Noesis::Texture* GetTexture() override;
+			virtual ::Noesis::Texture* GetTexture() override;
+
+
+			ITexture* GetColor() { return m_pColorTex; };
+			ITexture* GetDepth() { return m_pDepthTex; }
 		private:
-			Noesis::Ptr<CTextureWrapper> m_pWrapper = nullptr;
+			::Noesis::Ptr<CTextureWrapper>	m_target = nullptr;
+			ITexture*						m_pColorTex = nullptr;
+
+			::Noesis::Ptr<CTextureWrapper>	 m_depthTarget = nullptr;
+			ITexture*						m_pDepthTex = nullptr;
 		};
 	}
 }

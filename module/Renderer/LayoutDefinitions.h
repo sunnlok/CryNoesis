@@ -130,7 +130,7 @@ namespace Cry {
 			}
 
 			constexpr std::array<uint64, Noesis::Shader::Count> gShaderMasks = {
-				0,0,
+				ToMask(Effect::Rgba),ToMask(Effect::Mask),
 				//Path_Solid
 				 ToMask(Effect::Path) | ToMask(Paint::Solid),
 				//Path_Linear

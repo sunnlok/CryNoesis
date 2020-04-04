@@ -17,10 +17,14 @@
 #include "CryCore/Containers/CryArray.h"
 #include "NsMath/Matrix.h"
 
+
+#include "StateDefinitions.h"
+
 using namespace Cry;
 using namespace Ns::LayoutDefinitions;
+using namespace Cry::Noesis::Renderer;
 
-static std::array<Ns::SShaderInfo, Noesis::Shader::Count> g_shaderInfo;
+static std::array<Ns::SShaderInfo, ::Noesis::Shader::Count> g_shaderInfo;
 static CCryNameTSCRC gTechCrc("Noesis");
 
 constexpr auto gSizeTexDimCB = 4 * sizeof(float);
@@ -28,8 +32,36 @@ constexpr auto gSizeEffectCB = 8 * sizeof(float);
 constexpr auto gSizePixelCB = 13 * sizeof(float);
 constexpr auto gSizeVertexCB = 16 * sizeof(float);
 
+static SamplerStateHandle gSamplerStateHandles[64];
 
 
+static void RegisterSamplers(Renderer::IStageResourceProvider* pResourceProvider)
+{
+	int i = 0;
+	for (uint8_t minmag = 0; minmag < ::Noesis::MinMagFilter::Count; minmag++)
+	{
+		for (uint8_t mip = 0; mip < ::Noesis::MipFilter::Count; mip++)
+		{
+			auto filter = gSamplerFilter[i++];
+
+			for (uint8_t uv = 0; uv < WrapMode::Count; uv++)
+			{
+				auto addresses = gSamplerAdresses[uv];
+				Renderer::Sampler::SState state;
+				state.addressU = addresses.u;
+				state.addressV = addresses.v;
+				state.addressW = Renderer::Sampler::EAddressMode::Clamp;
+				state.min = filter.min;
+				state.mag = filter.mag;
+				state.mip = filter.mip;
+				state.bNeverKeep = true;
+
+				::Noesis::SamplerState s = { {uv, minmag, mip} };
+				gSamplerStateHandles[s.v] = pResourceProvider->RegisterSamplers(state);
+			}
+		}
+	}
+}
 
 
 Ns::CRenderDevice::CRenderDevice()
@@ -44,26 +76,17 @@ Ns::CRenderDevice::CRenderDevice()
 		int i = 0;
 		for (auto& desc : g_layoutInfoList)
 		{
-			CryLogAlways("Layout:");
-
-			
-
 			g_shaderInfo[i].effectID = desc.shader;
 			std::visit([=, &i](auto& descs) {
-				for (auto& descript : descs)
-				{
-					CryLogAlways(descript.semanticName);
-				}
-
 				g_shaderInfo[i].layout = m_pResourceProvider->RegisterLayout(descs.data(), descs.size());
-
-
 			}, desc.descriptions);
 			g_shaderInfo[i].mask = desc.mask;	
 			g_shaderInfo[i].pShader = gEnv->pRenderer->EF_LoadShader("Noesis", 0, desc.mask);
 
 			++i;
 		}
+
+		RegisterSamplers(m_pResourceProvider);
 	});
 }
 
@@ -73,69 +96,80 @@ Ns::CRenderDevice::~CRenderDevice()
 
 }
 
-static Noesis::DeviceCaps g_Capabilities{
+static ::Noesis::DeviceCaps g_Capabilities{
 	0.5f
 };
 
-const Noesis::DeviceCaps& Ns::CRenderDevice::GetCaps() const
+const ::Noesis::DeviceCaps& Ns::CRenderDevice::GetCaps() const
 {
 	return g_Capabilities;
 }
 
-Noesis::Ptr<Noesis::RenderTarget> Ns::CRenderDevice::CreateRenderTarget(const char* label, uint32_t width, uint32_t height, uint32_t sampleCount)
+::Noesis::Ptr<::Noesis::RenderTarget> Ns::CRenderDevice::CreateRenderTarget(const char* label, uint32_t width, uint32_t height, uint32_t sampleCount)
 {
+	string textName(label);
+	
 	Renderer::SRTCreationParams params = {
-		label,
+		textName,
 		width,
 		height,
 		Col_Transparent,
 		eTT_2D,
 		FT_NOMIPS | FT_DONT_STREAM | FT_USAGE_RENDERTARGET,
-		ETEX_Format::eTF_R8G8B8A8
+		ETEX_Format::eTF_R8G8B8A8,
+		-1
 	};
 
 	auto pTexture = m_pResourceProvider->CreateRenderTarget(params);
 	if (!pTexture)
 		return nullptr;
 
-	return Noesis::MakePtr<Ns::CRenderTarget>(std::move(pTexture));
+	textName.append("_Depth");
+
+	Renderer::SRTCreationParams depthParams = {
+		textName,
+		width,
+		height,
+		Clr_FarPlane,
+		eTT_2D,
+		FT_NOMIPS | FT_DONT_STREAM | FT_USAGE_DEPTHSTENCIL,
+		ETEX_Format::eTF_S8,
+		-1
+	};
+
+	auto pDepth = m_pResourceProvider->CreateRenderTarget(depthParams);
+
+	return ::Noesis::MakePtr<Ns::CRenderTarget>(std::move(pTexture), std::move(pDepth));
 }
 
-Noesis::Ptr<Noesis::RenderTarget> Ns::CRenderDevice::CloneRenderTarget(const char* label, Noesis::RenderTarget* surface)
+::Noesis::Ptr<::Noesis::RenderTarget> Ns::CRenderDevice::CloneRenderTarget(const char* label, ::Noesis::RenderTarget* surface)
 {
-	auto pOriginalTarget = surface->GetTexture();
-	auto pOriginalTexWrapper = static_cast<Ns::CTextureWrapper*>(pOriginalTarget);
-	auto pOriginalTex = pOriginalTexWrapper->GetActualTexture();
-
-	auto width = pOriginalTex->GetWidth();
-	auto height = pOriginalTex->GetHeight();
+	auto pTarget = static_cast<Ns::CRenderTarget*>(surface);
 
 	Renderer::SRTCreationParams params = {
 		label,
-		pOriginalTex->GetWidth(),
-		pOriginalTex->GetHeight(),
+		pTarget->GetColor()->GetWidth(),
+		pTarget->GetColor()->GetHeight(),
 		Col_Transparent,
 		eTT_2D,
 		FT_NOMIPS | FT_DONT_STREAM | FT_USAGE_RENDERTARGET,
-		ETEX_Format::eTF_R8G8B8A8
+		ETEX_Format::eTF_R8G8B8A8,
+		-1
 	};
 
 	auto pTexture = m_pResourceProvider->CreateRenderTarget(params);
 	if (!pTexture)
 		return nullptr;
 
-	RectI dimensions{width,height, 0, 1};
-	auto col = Col_Transparent;
-	gEnv->pRenderer->CopyTextureRegion(pOriginalTex, dimensions, pTexture, dimensions, col, 0);
 
-	return Noesis::MakePtr<Ns::CRenderTarget>(std::move(pTexture));
+	return ::Noesis::MakePtr<Ns::CRenderTarget>(pTexture, _smart_ptr(pTarget->GetDepth()));
 }
 
-Noesis::Ptr<Noesis::Texture> Ns::CRenderDevice::CreateTexture(const char* label, uint32_t width, uint32_t height, uint32_t numLevels, Noesis::TextureFormat::Enum format, const void** data)
+::Noesis::Ptr<::Noesis::Texture> Ns::CRenderDevice::CreateTexture(const char* label, uint32_t width, uint32_t height, uint32_t numLevels, ::Noesis::TextureFormat::Enum format, const void** data)
 {
-
-	ETEX_Format texFormat = format == Noesis::TextureFormat::RGBA8 ? ETEX_Format::eTF_R8G8B8A8 : ETEX_Format::eTF_R8;
-	auto pTexture = gEnv->pRenderer->CreateTexture(label, width, height, numLevels, data ? (uint8*)data[0] : nullptr, texFormat, 0);
+	ETEX_Format texFormat = format == ::Noesis::TextureFormat::RGBA8 ? ETEX_Format::eTF_R8G8B8A8 : ETEX_Format::eTF_R8;
+	uint32 textureFlags = FT_NOMIPS | FT_DONT_STREAM;
+	auto pTexture = gEnv->pRenderer->CreateTexture(label, width, height, 1, data ? (uint8*)((data[0])) : nullptr, texFormat, textureFlags);
 
 	if (!pTexture)
 		return nullptr;
@@ -143,23 +177,37 @@ Noesis::Ptr<Noesis::Texture> Ns::CRenderDevice::CreateTexture(const char* label,
 	_smart_ptr<ITexture> pSmartText;
 	pSmartText.Assign_NoAddRef(pTexture);
 
-	return Noesis::MakePtr<Ns::CTextureWrapper>(std::move(pSmartText));
+	if (m_pCurrentView)
+		m_pCurrentView->m_pTextures.push_back(pTexture);
+
+	return ::Noesis::MakePtr<Ns::CTextureWrapper>(std::move(pSmartText));
 }
 
-void Ns::CRenderDevice::UpdateTexture(Noesis::Texture* texture, uint32_t level, uint32_t x, uint32_t y, uint32_t width, uint32_t height, const void* data)
+void Ns::CRenderDevice::UpdateTexture(::Noesis::Texture* texture, uint32_t level, uint32_t x, uint32_t y, uint32_t width, uint32_t height, const void* data)
 {
+	if (level > 0)
+		return;
+
 	auto pTexWrapper = static_cast<Ns::CTextureWrapper*>(texture);
 	auto pTex = pTexWrapper->GetActualTexture();
 
-	gEnv->pRenderer->UpdateTextureInVideoMemory(pTex->GetTextureID(), (unsigned char*)data, x, y, width, height, pTex->GetTextureSrcFormat());
+	
+	auto texFormat = pTex->GetTextureSrcFormat();
+	//auto rowPitch = texFormat == ETEX_Format::eTF_R8 ? width : width * 4;
+
+	const ::IRenderer::SUpdateRect updateRect{
+		x,y,x,y,width,height
+	};
+	
+	//gEnv->pRenderer->SF_UpdateTexture(pTex->GetTextureID(), level, 1, &updateRect, (uint8*)data, rowPitch, 0, texFormat);
+
+	gEnv->pRenderer->UpdateTextureInVideoMemory(pTex->GetTextureID(), (unsigned char*)data, x, y, width, height, texFormat);
 }
 
 void Ns::CRenderDevice::BeginRender(bool offscreen)
 {
 	m_bRenderingOffscreen = offscreen;
 
-	m_pCurrentView->idxBufferOffset = 0;
-	m_pCurrentView->vtxBufferOffset = 0;
 	if (offscreen)
 		BeginOffscreenRender();
 	else
@@ -167,22 +215,48 @@ void Ns::CRenderDevice::BeginRender(bool offscreen)
 
 }
 
-void Ns::CRenderDevice::SetRenderTarget(Noesis::RenderTarget* surface)
+void Ns::CRenderDevice::SetRenderTarget(::Noesis::RenderTarget* surface)
 {
-	m_pCurrentRenderTarget = surface;
+	m_pCurrentRenderTarget = static_cast<Ns::CRenderTarget*>(surface);
 }
 
-void Ns::CRenderDevice::BeginTile(const Noesis::Tile& tile, uint32_t surfaceWidth, uint32_t surfaceHeight)
+void Ns::CRenderDevice::BeginTile(const ::Noesis::Tile& tile, uint32_t surfaceWidth, uint32_t surfaceHeight)
 {
 	
+	SRenderViewport viewport{
+		0,
+		0,
+		(int)surfaceWidth,
+		(int)surfaceHeight,
+	};
+	
+	uint32_t x = tile.x;
+	uint32_t y = (uint32_t)surfaceHeight - (tile.y + tile.height);
+
+	Vec4_tpl<ulong>  rect{
+		(ulong)x,
+		(ulong)y,
+		(ulong)tile.width,
+		(ulong)tile.height,
+	};
+
+	Renderer::Pipeline::Pass::SPassParams params{
+		viewport,
+		m_pCurrentRenderTarget->GetColor(),
+		m_pCurrentRenderTarget->GetDepth(),
+		BIT(2) | BIT(1),
+		rect
+	};
+
+	m_pPipeline->RT_BeginNewPass(*m_pCurrentView->stage, params);
 }
 
 void Ns::CRenderDevice::EndTile()
 {
-	//The method or operation is not implemented.
+	m_pPipeline->RT_EndPass(*m_pCurrentView->stage, true);
 }
 
-void Ns::CRenderDevice::ResolveRenderTarget(Noesis::RenderTarget* surface, const Noesis::Tile* tiles, uint32_t numTiles)
+void Ns::CRenderDevice::ResolveRenderTarget(::Noesis::RenderTarget* surface, const ::Noesis::Tile* tiles, uint32_t numTiles)
 {
 	//The method or operation is not implemented.
 }
@@ -197,13 +271,21 @@ void Ns::CRenderDevice::EndRender()
 
 void* Ns::CRenderDevice::MapVertices(uint32_t bytes)
 {
+	if (m_pCurrentView->activeVertexBuffer != Renderer::Buffers::CINVALID_BUFFER)
+	{
+		m_pResourceProvider->FreeBuffer(m_pCurrentView->activeVertexBuffer);
+	}
+
+	Renderer::Buffers::SBufferParams params(
+		bytes,
+		1,
+		Renderer::Buffers::EBufferBindType::Vertex,
+		Renderer::Buffers::EBufferUsage::Transient
+	);
+
+	m_pCurrentView->activeVertexBuffer = m_pResourceProvider->CreateOrUpdateBuffer(params);
 
 	uint8* pStream = (uint8 *)m_pResourceProvider->BufferBeginWrite(m_pCurrentView->activeVertexBuffer);
-	pStream = pStream + m_pCurrentView->vtxBufferOffset;
-
-	m_pCurrentView->vtxBufferDrawPos = m_pCurrentView->vtxBufferOffset;
-	m_pCurrentView->vtxBufferOffset += bytes;
-
 	return pStream;
 }
 
@@ -214,12 +296,21 @@ void Ns::CRenderDevice::UnmapVertices()
 
 void* Ns::CRenderDevice::MapIndices(uint32_t bytes)
 {
+	if (m_pCurrentView->activeIndexBuffer != Renderer::Buffers::CINVALID_BUFFER)
+	{
+		m_pResourceProvider->FreeBuffer(m_pCurrentView->activeIndexBuffer);
+	}
+
+	Renderer::Buffers::SBufferParams params(
+		bytes / 2,
+		2,
+		Renderer::Buffers::EBufferBindType::Index,
+		Renderer::Buffers::EBufferUsage::Transient
+	);
+
+	m_pCurrentView->activeIndexBuffer = m_pResourceProvider->CreateOrUpdateBuffer(params);
+
 	uint8* pStream = (uint8*)m_pResourceProvider->BufferBeginWrite(m_pCurrentView->activeIndexBuffer);
-	pStream = pStream + m_pCurrentView->idxBufferOffset;
-
-	m_pCurrentView->idxBufferDrawPos = m_pCurrentView->idxBufferOffset;
-	m_pCurrentView->idxBufferOffset += bytes;
-
 	return pStream;
 }
 
@@ -229,24 +320,27 @@ void Ns::CRenderDevice::UnmapIndices()
 }
 
 
-void Ns::CRenderDevice::DrawBatch(const Noesis::Batch& batch)
+void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 {
 	using namespace Renderer::Pipeline::Pass;
 
 	//The method or operation is not implemented.
 	auto& info = g_shaderInfo[batch.shader.v];
+	auto& layoutInfo = g_layoutInfoList[batch.shader.v];
 
 	SDrawParamsExternalBuffers bufferParams;
 	bufferParams.inputBuffer = m_pCurrentView->activeVertexBuffer;
 	bufferParams.idxBuffer = m_pCurrentView->activeIndexBuffer;
 
 	bufferParams.inputLayout = info.layout;
-	bufferParams.inputSize		= batch.numVertices;
-	bufferParams.inputOffset = m_pCurrentView->vtxBufferDrawPos; //batch.vertexOffset + 
-	bufferParams.inputStride = g_layoutInfoList[batch.shader.v].stride;
+	bufferParams.inputStride = layoutInfo.stride;
 
+	bufferParams.inputSize	= batch.numVertices;
+	
+	bufferParams.inputOffset = 0;
+	bufferParams.inputByteOffset = batch.vertexOffset;
 	bufferParams.idxSize = batch.numIndices;
-	bufferParams.idxOffset = batch.startIndex + m_pCurrentView->idxBufferDrawPos / 2;
+	bufferParams.idxOffset = batch.startIndex;
 	bufferParams.isIDX32 = false;
 
 	StaticDynArray <SMultiVlaueConstantBuffer, 4> buffers;
@@ -265,7 +359,7 @@ void Ns::CRenderDevice::DrawBatch(const Noesis::Batch& batch)
 			true,
 			(Renderer::Shader::EConstantSlot)0,
 			Renderer::Shader::EShaderStages::ssVertex,
-			TArray(&matrixBuffers[0], matrixBuffers.size())
+			matrixBuffers.empty() ? TArray<SBufferValuePtr>() : TArray(&matrixBuffers[0], matrixBuffers.size())
 		};
 		
 		buffers.push_back(matrixBuffer);
@@ -310,7 +404,7 @@ void Ns::CRenderDevice::DrawBatch(const Noesis::Batch& batch)
 			true,
 			(Renderer::Shader::EConstantSlot)0,
 			Renderer::Shader::EShaderStages::ssPixel,
-			TArray(&pixelBuffers[0], pixelBuffers.size())
+			pixelBuffers.empty() ? TArray<SBufferValuePtr>() : TArray(&pixelBuffers[0], pixelBuffers.size())
 			};
 
 			buffers.push_back(pixelBuffer);
@@ -347,7 +441,7 @@ void Ns::CRenderDevice::DrawBatch(const Noesis::Batch& batch)
 			true,
 			(Renderer::Shader::EConstantSlot)1,
 			Renderer::Shader::EShaderStages::ssVertex | Renderer::Shader::EShaderStages::ssPixel,
-			TArray(&textureBuffers[0], textureBuffers.size())
+			textureBuffers.empty() ? TArray<SBufferValuePtr>() : TArray(&textureBuffers[0], textureBuffers.size())
 			};
 
 			buffers.push_back(textureValues);
@@ -373,7 +467,7 @@ void Ns::CRenderDevice::DrawBatch(const Noesis::Batch& batch)
 			true,
 			(Renderer::Shader::EConstantSlot)2,
 			Renderer::Shader::EShaderStages::ssPixel,
-			TArray(&effectBuffers[0], effectBuffers.size())
+			effectBuffers.empty() ? TArray<SBufferValuePtr>() : TArray(&effectBuffers[0], effectBuffers.size())
 			};
 
 			buffers.push_back(effectValues);
@@ -386,7 +480,7 @@ void Ns::CRenderDevice::DrawBatch(const Noesis::Batch& batch)
 	constantParams.buffers = TArray(&buffers[0], buffers.size());
 
 	SShaderParams shaderParams;
-	shaderParams.pShader = info.pShader;//m_pNoesisShader;
+	shaderParams.pShader = info.pShader;//m_p::NoesisShader;
 	shaderParams.techniqueLCCRC = gTechCrc.get();
 	shaderParams.rtMask = info.mask;
 
@@ -401,9 +495,9 @@ void Ns::CRenderDevice::DrawBatch(const Noesis::Batch& batch)
 			static_cast<Ns::CTextureWrapper*>(batch.pattern)->GetActualTexture(),
 			0
 		};
-		texParams.push_back(texParams);
+		texParams.push_back(param);
 		SSamplerParam samplerParam{
-			0,
+			gSamplerStateHandles[batch.patternSampler.v],
 			0
 		};
 		samplerParams.emplace_back(samplerParam); //TODO: Add sampler registration to stage api
@@ -415,9 +509,9 @@ void Ns::CRenderDevice::DrawBatch(const Noesis::Batch& batch)
 			static_cast<Ns::CTextureWrapper*>(batch.ramps)->GetActualTexture(),
 			1
 		};
-		texParams.push_back(texParams);
+		texParams.push_back(param);
 		SSamplerParam samplerParam{
-			0,
+			gSamplerStateHandles[batch.rampsSampler.v],
 			1
 		};
 		samplerParams.emplace_back(samplerParam); //TODO: Add sampler registration to stage api
@@ -429,9 +523,9 @@ void Ns::CRenderDevice::DrawBatch(const Noesis::Batch& batch)
 			static_cast<Ns::CTextureWrapper*>(batch.image)->GetActualTexture(),
 			2
 		};
-		texParams.push_back(texParams);
+		texParams.push_back(param);
 		SSamplerParam samplerParam{
-			0,
+			gSamplerStateHandles[batch.imageSampler.v],
 			2
 		};
 		samplerParams.emplace_back(samplerParam); //TODO: Add sampler registration to stage api
@@ -442,9 +536,9 @@ void Ns::CRenderDevice::DrawBatch(const Noesis::Batch& batch)
 			static_cast<Ns::CTextureWrapper*>(batch.glyphs)->GetActualTexture(),
 			3
 		};
-		texParams.push_back(texParams);
+		texParams.push_back(param);
 		SSamplerParam samplerParam{
-			0,
+			gSamplerStateHandles[batch.glyphsSampler.v],
 			3
 		};
 		samplerParams.emplace_back(samplerParam); //TODO: Add sampler registration to stage api
@@ -455,30 +549,26 @@ void Ns::CRenderDevice::DrawBatch(const Noesis::Batch& batch)
 			static_cast<Ns::CTextureWrapper*>(batch.shadow)->GetActualTexture(),
 			4
 		};
-		texParams.push_back(texParams);
+		texParams.push_back(param);
 		SSamplerParam samplerParam{
-			0,
+			gSamplerStateHandles[batch.shadowSampler.v],
 			4
 		};
 		samplerParams.emplace_back(samplerParam); //TODO: Add sampler registration to stage api
 	}
 
-	shaderParams.textures = TArray(&texParams[0], texParams.size());
-	shaderParams.samplerStates = TArray(&samplerParams[0], samplerParams.size());
-	/*string maskDBG;
-	for (uint64 i =0; i < (uint64)Gauss::Count; ++i)
-	{
-		uint64 chckMsk = 1ull << i;
-		if (info.mask & chckMsk)
-		{
-			maskDBG.append(gMaskNames[i]);
-			maskDBG.append(" ");
-		}
-
-	}
-	CryLogAlways("Shader mask: %s ", maskDBG);*/
+	if (!texParams.empty())
+		shaderParams.textures = TArray(&texParams[0], texParams.size());
+	if (!samplerParams.empty())
+		shaderParams.samplerStates = TArray(&samplerParams[0], samplerParams.size());
 
 	SPrimitiveParams primParams(shaderParams, constantParams, bufferParams);
+
+	uint8 selectedBlendMode = batch.renderState.f.colorEnable ? batch.renderState.f.blendMode : 3;
+
+	primParams.renderStateFlags = gDepthStateMasks[batch.renderState.f.stencilMode] | gBlendStateMask[selectedBlendMode];
+	primParams.stencilState = (int)gDepthStencilMasks[batch.renderState.f.stencilMode];
+	primParams.stencilRef = batch.stencilRef;
 
 	m_pPipeline->RT_AddPrimitive(*m_pCurrentView->stage, primParams);
 }
@@ -546,34 +636,44 @@ void Cry::Ns::CRenderDevice::RT_AddView(SViewInitParams viewParams)
 		Col_Transparent,
 		eTT_2D,
 		FT_NOMIPS | FT_DONT_STREAM | FT_USAGE_RENDERTARGET,
-		ETEX_Format::eTF_R8G8B8A8
+		ETEX_Format::eTF_R8G8B8A8,
+		-1
 	};
 
 	pViewData->viewColorTarget = m_pResourceProvider->CreateRenderTarget(params);
+	//pViewData->viewColorTarget = m_pResourceProvider->GetCurrentColorTarget();
 
-	name.append("_Depth");
+	string deptRTName = name;
 
-	params.rtName = name;
-	params.flags = FT_NOMIPS | FT_DONT_STREAM | FT_USAGE_DEPTHSTENCIL;
-	params.format = ETEX_Format::eTF_A8;
+	deptRTName.append("_Depth");
+	Renderer::SRTCreationParams depthParams = {
+		deptRTName,
+		viewParams.width,
+		viewParams.height,
+		Clr_FarPlane,
+		eTT_2D,
+		FT_NOMIPS | FT_DONT_STREAM | FT_USAGE_DEPTHSTENCIL,
+		ETEX_Format::eTF_S8,
+		-1
+	};
 
-	pViewData->viewDepthTarget = m_pResourceProvider->CreateRenderTarget(params);
+	pViewData->viewDepthTarget = m_pResourceProvider->CreateRenderTarget(depthParams);
 
 	passParams.pColorTarget = pViewData->viewColorTarget;
 	passParams.pDepthsTarget = pViewData->viewDepthTarget;
 	passParams.viewPort = SRenderViewport(0, 0, viewParams.width, viewParams.height);
-	passParams.clearMask = BIT(2);
+	passParams.clearMask = BIT(2) | BIT(1);
 
 	pViewData->viewWidth = viewParams.width;
 	pViewData->viewHeight = viewParams.height;
 	pViewData->viewPass = m_pPipeline->RT_AllocatePass(*pStage, passParams);
 
 
-	Renderer::Buffers::SBufferParams idxBufferParams(DYNAMIC_IB_SIZE, 1, Renderer::Buffers::EBufferBindType::Index);
-	pViewData->activeIndexBuffer = m_pResourceProvider->CreateOrUpdateBuffer(idxBufferParams, pViewData->activeIndexBuffer);
+	/*Renderer::Buffers::SBufferParams idxBufferParams(DYNAMIC_IB_SIZE, 1, Renderer::Buffers::EBufferBindType::Index);
+	pViewData->activeIndexBuffer = m_pResourceProvider->CreateOrUpdateBuffer(idxBufferParams, pViewData->activeIndexBuffer);*/
 
-	Renderer::Buffers::SBufferParams vtxBufferParams(DYNAMIC_VB_SIZE, 1, Renderer::Buffers::EBufferBindType::Vertex);
-	pViewData->activeVertexBuffer = m_pResourceProvider->CreateOrUpdateBuffer(vtxBufferParams, pViewData->activeVertexBuffer);
+	/*Renderer::Buffers::SBufferParams vtxBufferParams(DYNAMIC_VB_SIZE, 1, Renderer::Buffers::EBufferBindType::Vertex);
+	pViewData->activeVertexBuffer = m_pResourceProvider->CreateOrUpdateBuffer(vtxBufferParams, pViewData->activeVertexBuffer);*/
 
 
 	//Create constant buffers
@@ -588,21 +688,28 @@ void Cry::Ns::CRenderDevice::RT_AddView(SViewInitParams viewParams)
 	pViewData->textDimCB = m_pResourceProvider->CreateConstantBuffer(gSizeTexDimCB, texDimCBDbg);
 
 	pViewData->stage = pStage;
+
+	m_pCurrentView = &*pViewData;
+
 	pViewData->view->GetRenderer()->Init(this);
 	m_perViewRenderData.push_back(std::move(pViewData));
+	
 	
 }
 
 void Cry::Ns::CRenderDevice::RT_RenderView(SPerViewRenderData* pViewData, Renderer::Pipeline::StageRenderArguments& args)
 {
-	auto pRenderer = pViewData->view->GetRenderer();
-	pRenderer->UpdateRenderTree();
-	//if ()
-	{
-		m_pCurrentView = pViewData;
+	m_pCurrentView = pViewData;
 
+	auto pRenderer = pViewData->view->GetRenderer();
+
+	if (pRenderer->UpdateRenderTree())
+	{
 		pRenderer->RenderOffscreen();
 		pRenderer->Render();
+
+		//TODO: Relace with proper api
+		m_pPipeline->RT_StretchToColorTarget(m_pCurrentView->viewColorTarget, GS_BLSRC_ONE | GS_BLDST_ONEMINUSSRCALPHA);
 
 
 		m_pCurrentView = nullptr;
@@ -631,21 +738,3 @@ void Cry::Ns::CRenderDevice::RT_DestroyView(SPerViewRenderData* pViewData, Rende
 		//Do a potential surface clear here 
 	}
 }
-
-Cry::Renderer::Pipeline::Pass::SInlineConstantParams Cry::Ns::CRenderDevice::CreateConstantParameters(const Noesis::Batch& batch)
-{
-	///*Renderer::Pipeline::Pass::SInlineMultiValueConstantParams params;
-
-	//if (m_pCurrentView->vertexCBHash != batch.projMtxHash)
-	//{
-	//	SMultiVlaueConstantBuffer buffer;
-	//	buffer.externalBuffer = (uint8*)batch.projMtx;
-
-	//}*/
-
-
-	//m_pResourceProvider->CreateOrUpdateBuffer()
-	return SInlineConstantParams();
-
-}
-

@@ -1,0 +1,142 @@
+Property
+{
+Name = %_HAS_POSITION
+Mask = 0x1
+}
+Property
+{
+Name = %_HAS_COLOR
+Mask = 0x2
+}
+Property
+{
+Name = %_HAS_UV0
+Mask = 0x4
+}
+Property
+{
+Name = %_HAS_UV1
+Mask = 0x8
+}
+Property
+{
+Name = %_HAS_UV2
+Mask = 0x10
+}
+Property
+{
+Name = %_HAS_COVERAGE
+Mask = 0x20
+}
+
+Property
+{
+Name = %_GEN_ST1
+Mask = 0x40
+}
+
+Property
+{
+Name = %_EFFECT_RGBA
+Mask = 0x80
+}
+Property
+{
+Name = %_EFFECT_MASK
+Mask = 0x100
+}
+Property
+{
+Name = %_EFFECT_PATH
+Mask = 0x200
+}
+Property
+{
+Name = %_EFFECT_PATH_AA
+Mask = 0x400
+}
+Property
+{
+Name = %_EFFECT_SDF
+Mask = 0x800
+}
+Property
+{
+Name = %_EFFECT_SDF_LCD
+Mask = 0x1000
+}
+
+
+Property
+{
+Name = %_EFFECT_IMAGE_OPACITY
+Mask = 0x2000
+}
+
+Property
+{
+Name = %_EFFECT_IMAGE_SHADOW_V
+Mask = 0x4000
+}
+
+Property
+{
+Name = %_EFFECT_IMAGE_SHADOW_H
+Mask = 0x8000
+}
+
+Property
+{
+Name = %_EFFECT_IMAGE_BLUR_V
+Mask = 0x10000
+}
+
+Property
+{
+Name = %_EFFECT_IMAGE_BLUR_H
+Mask = 0x20000
+}
+
+Property
+{
+Name = %_PAINT_SOLID
+Mask = 0x40000
+}
+
+
+Property
+{
+Name = %_PAINT_LINEAR
+Mask = 0x80000
+}
+
+
+Property
+{
+Name = %_PAINT_RADIAL
+Mask = 0x100000
+}
+
+Property
+{
+Name = %_PAINT_PATTERN
+Mask = 0x200000
+}
+
+
+Property
+{
+Name = %_GAUSSIAN_35_TAP
+Mask = 0x400000
+}
+
+Property
+{
+Name = %_GAUSSIAN_63_TAP
+Mask = 0x800000
+}
+Property
+{
+Name = %_GAUSSIAN_127_TAP
+Mask = 0x1000000
+}

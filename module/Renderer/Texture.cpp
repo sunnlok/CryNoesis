@@ -31,17 +31,25 @@ bool Cry::Ns::CTextureWrapper::IsInverted() const
 	return false;
 }
 
-Noesis::Texture* Cry::Ns::CRenderTarget::GetTexture()
+::Noesis::Texture* Cry::Ns::CRenderTarget::GetTexture()
 {
-	return m_pWrapper;
+	return m_target;
 }
 
-Cry::Ns::CRenderTarget::CRenderTarget(ITexture* pTexture)
+Cry::Ns::CRenderTarget::CRenderTarget(ITexture* pColor, ITexture* pDepth)
 {
-	m_pWrapper = Noesis::MakePtr<CTextureWrapper>(pTexture);
+	m_target = ::Noesis::MakePtr<CTextureWrapper>(pColor);
+	m_depthTarget = ::Noesis::MakePtr<CTextureWrapper>(pDepth);
+
+	m_pColorTex = pColor;
+	m_pDepthTex = pDepth;
 }
 
-Cry::Ns::CRenderTarget::CRenderTarget(_smart_ptr<ITexture> pTexture)
+Cry::Ns::CRenderTarget::CRenderTarget(_smart_ptr<ITexture> pColor, _smart_ptr<ITexture> pDepth)
 {
-	m_pWrapper = Noesis::MakePtr<CTextureWrapper>(pTexture);
+	m_target = ::Noesis::MakePtr<CTextureWrapper>(pColor);
+	m_depthTarget = ::Noesis::MakePtr<CTextureWrapper>(pDepth);
+
+	m_pColorTex = pColor;
+	m_pDepthTex = pDepth;
 }
