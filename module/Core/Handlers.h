@@ -26,12 +26,10 @@ namespace Detail
 
 		format.Format("[NOESIS | %s] %s", prefixes[levelAdjusted], message);
 		gEnv->pLog->LogWithType(types[levelAdjusted], format.c_str());
-		CryLogAlways(format.c_str());
 		if (strcmp(filename, "") != 0)
 		{
 			format.Format("[File: %s | Line %d]", filename, line);
-			CryLogAlways(format.c_str());
-			//gEnv->pLog->LogWithType(types[levelAdjusted], format.c_str());
+			gEnv->pLog->LogWithType(types[levelAdjusted], format.c_str());
 		}
 			
 	}
@@ -52,13 +50,11 @@ namespace Detail
 		else
 		{
 			format.Format("[NOESIS | E] %s", message);
-			//gEnv->pLog->LogWithType(IMiniLog::ELogType::eErrorAlways, format.c_str());
-			CryLogAlways(format.c_str());
+			gEnv->pLog->LogWithType(IMiniLog::ELogType::eErrorAlways, format.c_str());
 			if (strcmp(file, "") != 0)
 			{
 				format.Format("[File: %s | Line %d]", file, line);
-				CryLogAlways(format.c_str());
-				//gEnv->pLog->LogWithType(IMiniLog::ELogType::eErrorAlways, format.c_str());
+				gEnv->pLog->LogWithType(IMiniLog::ELogType::eErrorAlways, format.c_str());
 			}
 				
 

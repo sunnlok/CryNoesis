@@ -53,10 +53,6 @@ namespace Cry
 			
 
 			//This is not ideal. Sadly there is no way to track constant buffers outside the renderer via smart pointer
-			uintptr_t vertexCB = Renderer::Buffers::CINVALID_BUFFER;
-			uintptr_t effectCB = Renderer::Buffers::CINVALID_BUFFER;
-			uintptr_t pixelCB = Renderer::Buffers::CINVALID_BUFFER;
-			uintptr_t textDimCB = Renderer::Buffers::CINVALID_BUFFER;
 
 			uint32_t vertexCBHash;
 			uint32_t pixelCBHash;

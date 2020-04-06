@@ -6,6 +6,10 @@ namespace Cry
 {
 namespace Ns
 {
+	using TViewList = std::vector<Noesis::Ptr<Noesis::IView>>;
+
+	class CInputHandler;
+
 	class CImplementation
 	{
 	public:
@@ -22,14 +26,17 @@ namespace Ns
 		void UpdateBeforeRender();
 
 		bool CreateView(const char* xamlPath, Vec2i dimensions);
+
+		TViewList& GetViewList() { return m_views; }
 	private:
 		float m_lastFrameDelta = 0;
 
-
-		std::vector<Noesis::Ptr<Noesis::IView>> m_views;
+		TViewList m_views;
 
 		Noesis::Ptr<CRenderDevice> m_pRenderDevice;
 		CTimeValue m_startTime;
+
+		std::unique_ptr<CInputHandler> m_pInputHandler;
 	};
 }
 }

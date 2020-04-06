@@ -13,6 +13,11 @@ Noesis::Ptr<Noesis::Stream> Cry::Ns::CXamlProvider::LoadXaml(const char* uri)
 	if (!path.has_extension())
 		path += std::filesystem::path(".xaml");
 
-	std::string pathString = path.string();
+	std::filesystem::path basePath = "UI";
+	basePath /= path;
+
+	std::string pathString = basePath.string();
+
+
 	return CPakStream::Open(pathString.c_str());
 }

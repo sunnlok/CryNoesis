@@ -9,8 +9,6 @@
 #include <NsRender/Texture.h>
 #include "Texture.h"
 
-#include <dxgiformat.h>
-
 #include "LayoutDefinitions.h"
 #include <variant>
 #include "../RenderDll/Common/CryNameR.h"
@@ -28,8 +26,8 @@ static std::array<Ns::SShaderInfo, ::Noesis::Shader::Count> g_shaderInfo;
 static CCryNameTSCRC gTechCrc("Noesis");
 
 constexpr auto gSizeTexDimCB = 4 * sizeof(float);
-constexpr auto gSizeEffectCB = 8 * sizeof(float);
-constexpr auto gSizePixelCB = 13 * sizeof(float);
+constexpr auto gSizeEffectCB = 16 * sizeof(float);
+constexpr auto gSizePixelCB = 12 * sizeof(float);
 constexpr auto gSizeVertexCB = 16 * sizeof(float);
 
 static SamplerStateHandle gSamplerStateHandles[64];
@@ -47,19 +45,39 @@ static void RegisterSamplers(Renderer::IStageResourceProvider* pResourceProvider
 			for (uint8_t uv = 0; uv < WrapMode::Count; uv++)
 			{
 				auto addresses = gSamplerAdresses[uv];
-				Renderer::Sampler::SState state;
-				state.addressU = addresses.u;
-				state.addressV = addresses.v;
-				state.addressW = Renderer::Sampler::EAddressMode::Clamp;
-				state.min = filter.min;
-				state.mag = filter.mag;
-				state.mip = filter.mip;
-				state.bNeverKeep = true;
 
+				Renderer::Sampler::SState state{
+				filter.min,
+				filter.mag,
+				filter.mip,
+				addresses.u,
+				addresses.v,
+				Renderer::Sampler::EAddressMode::Clamp,
+				state.bNeverKeep = true
+				};
+				
 				::Noesis::SamplerState s = { {uv, minmag, mip} };
 				gSamplerStateHandles[s.v] = pResourceProvider->RegisterSamplers(state);
 			}
 		}
+	}
+}
+
+static void RegisterLayouts(Renderer::IStageResourceProvider* pResourceProvider)
+{
+	
+	for (int i = 0; i < g_layoutInfoList.size(); ++i )
+	{
+		auto& layoutInfo = g_layoutInfoList[i];
+		auto& shaderInfo = g_shaderInfo[i];
+		shaderInfo.effectID = layoutInfo.shader;
+		
+		std::visit([&shaderInfo, pResourceProvider](auto& descs) {
+			shaderInfo.layout = pResourceProvider->RegisterLayout(descs.data(), descs.size());
+		}, layoutInfo.descriptions);
+		shaderInfo.mask = layoutInfo.mask;
+
+		shaderInfo.pShader = gEnv->pRenderer->EF_LoadShader("Noesis", 0, layoutInfo.mask);
 	}
 }
 
@@ -72,20 +90,7 @@ Ns::CRenderDevice::CRenderDevice()
 	//m_pNoesisShader = gEnv->pRenderer->EF_LoadShader("Noesis", g_layoutInfoList[0].mask);
 
 	m_pPipeline->ExecuteRenderThreadCommand([=]() {
-
-		int i = 0;
-		for (auto& desc : g_layoutInfoList)
-		{
-			g_shaderInfo[i].effectID = desc.shader;
-			std::visit([=, &i](auto& descs) {
-				g_shaderInfo[i].layout = m_pResourceProvider->RegisterLayout(descs.data(), descs.size());
-			}, desc.descriptions);
-			g_shaderInfo[i].mask = desc.mask;	
-			g_shaderInfo[i].pShader = gEnv->pRenderer->EF_LoadShader("Noesis", 0, desc.mask);
-
-			++i;
-		}
-
+		RegisterLayouts(m_pResourceProvider);
 		RegisterSamplers(m_pResourceProvider);
 	});
 }
@@ -222,16 +227,31 @@ void Ns::CRenderDevice::SetRenderTarget(::Noesis::RenderTarget* surface)
 
 void Ns::CRenderDevice::BeginTile(const ::Noesis::Tile& tile, uint32_t surfaceWidth, uint32_t surfaceHeight)
 {
-	
+	//Todo: refine all of this, far to many drawvalls and different rectangle definitions ._.
+
+
+	uint32_t x = tile.x;
+	uint32_t y = (uint32_t)surfaceHeight - (tile.y + tile.height);
+
 	SRenderViewport viewport{
-		0,
-		0,
+		(int)0,
+		(int)0,
 		(int)surfaceWidth,
 		(int)surfaceHeight,
 	};
 	
-	uint32_t x = tile.x;
-	uint32_t y = (uint32_t)surfaceHeight - (tile.y + tile.height);
+
+	Vec4_tpl<ulong>  clearRect{
+		(ulong)x,
+		(ulong)y,
+		(ulong)x + tile.width,
+		(ulong)y + tile.height,
+	};
+
+	m_pPipeline->RT_ClearSurfaceRegion(*m_pCurrentView->stage, m_pCurrentRenderTarget->GetColor(), Col_Transparent, 1, &clearRect);
+	m_pPipeline->RT_ClearDepthSurfaceRegion(*m_pCurrentView->stage, m_pCurrentRenderTarget->GetDepth(), 0x00000002l, Clr_Unused.r, Val_Stencil, 1, &clearRect);
+
+	
 
 	Vec4_tpl<ulong>  rect{
 		(ulong)x,
@@ -240,11 +260,13 @@ void Ns::CRenderDevice::BeginTile(const ::Noesis::Tile& tile, uint32_t surfaceWi
 		(ulong)tile.height,
 	};
 
+	
+
 	Renderer::Pipeline::Pass::SPassParams params{
 		viewport,
 		m_pCurrentRenderTarget->GetColor(),
 		m_pCurrentRenderTarget->GetDepth(),
-		BIT(2) | BIT(1),
+		0,
 		rect
 	};
 
@@ -355,7 +377,7 @@ void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 		matrixBuffers.push_back(matrixPtr);
 
 		SMultiVlaueConstantBuffer matrixBuffer{
-			m_pCurrentView->vertexCB,
+			Renderer::Buffers::CINVALID_BUFFER,
 			true,
 			(Renderer::Shader::EConstantSlot)0,
 			Renderer::Shader::EShaderStages::ssVertex,
@@ -367,10 +389,10 @@ void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 	}
 	
 	StaticDynArray<SBufferValuePtr, 3> pixelBuffers;
-	//if (batch.rgba != 0 || batch.radialGrad != 0 || batch.opacity != 0)
+	if (batch.rgba != 0 || batch.radialGrad != 0 || batch.opacity != 0)
 	{
 		uint32 hash = batch.rgbaHash ^ batch.radialGradHash ^ batch.opacityHash;
-		if (m_pCurrentView->pixelCBHash != hash)
+		//if (m_pCurrentView->pixelCBHash != hash)
 		{
 			if (batch.rgba != 0)
 			{
@@ -400,7 +422,7 @@ void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 			}
 
 			SMultiVlaueConstantBuffer pixelBuffer{
-			m_pCurrentView->pixelCB,
+			Renderer::Buffers::CINVALID_BUFFER,
 			true,
 			(Renderer::Shader::EConstantSlot)0,
 			Renderer::Shader::EShaderStages::ssPixel,
@@ -437,7 +459,7 @@ void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 			textureBuffers.push_back(textureBuffer);
 
 			SMultiVlaueConstantBuffer textureValues{
-			m_pCurrentView->textDimCB,
+			Renderer::Buffers::CINVALID_BUFFER,
 			true,
 			(Renderer::Shader::EConstantSlot)1,
 			Renderer::Shader::EShaderStages::ssVertex | Renderer::Shader::EShaderStages::ssPixel,
@@ -463,7 +485,7 @@ void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 			effectBuffers.push_back(effectBuffer);
 
 			SMultiVlaueConstantBuffer effectValues{
-			m_pCurrentView->effectCB,
+			Renderer::Buffers::CINVALID_BUFFER,
 			true,
 			(Renderer::Shader::EConstantSlot)2,
 			Renderer::Shader::EShaderStages::ssPixel,
@@ -675,18 +697,6 @@ void Cry::Ns::CRenderDevice::RT_AddView(SViewInitParams viewParams)
 	/*Renderer::Buffers::SBufferParams vtxBufferParams(DYNAMIC_VB_SIZE, 1, Renderer::Buffers::EBufferBindType::Vertex);
 	pViewData->activeVertexBuffer = m_pResourceProvider->CreateOrUpdateBuffer(vtxBufferParams, pViewData->activeVertexBuffer);*/
 
-
-	//Create constant buffers
-	string vtxCBDbg = name + "_VTX_CB";
-	pViewData->vertexCB = m_pResourceProvider->CreateConstantBuffer(gSizeVertexCB, vtxCBDbg);
-
-	string effectCBDbg = name + "_EFFECT_CB";
-	pViewData->effectCB = m_pResourceProvider->CreateConstantBuffer(gSizeEffectCB, effectCBDbg);
-	string pixelCBDbg = name + "_PIXEL_CB";
-	pViewData->pixelCB	= m_pResourceProvider->CreateConstantBuffer(gSizePixelCB, pixelCBDbg);
-	string texDimCBDbg = name + "_TEX_CB";
-	pViewData->textDimCB = m_pResourceProvider->CreateConstantBuffer(gSizeTexDimCB, texDimCBDbg);
-
 	pViewData->stage = pStage;
 
 	m_pCurrentView = &*pViewData;
@@ -703,17 +713,18 @@ void Cry::Ns::CRenderDevice::RT_RenderView(SPerViewRenderData* pViewData, Render
 
 	auto pRenderer = pViewData->view->GetRenderer();
 
-	if (pRenderer->UpdateRenderTree())
+	//Fix this to actual draw the last frame without clearing it when no data is available
+	pRenderer->UpdateRenderTree();
+	//if ()
 	{
 		pRenderer->RenderOffscreen();
 		pRenderer->Render();
-
-		//TODO: Relace with proper api
-		m_pPipeline->RT_StretchToColorTarget(m_pCurrentView->viewColorTarget, GS_BLSRC_ONE | GS_BLDST_ONEMINUSSRCALPHA);
-
-
-		m_pCurrentView = nullptr;
 	}
+	//TODO: Replace with proper api
+	m_pPipeline->RT_StretchToColorTarget(m_pCurrentView->viewColorTarget, gBlendStateMask[1] | gDepthStateMasks[0]);
+
+
+	m_pCurrentView = nullptr;
 }
 
 void Cry::Ns::CRenderDevice::RT_DestroyView(SPerViewRenderData* pViewData, Renderer::Pipeline::StageDestructionsArguments& args)
@@ -726,15 +737,10 @@ void Cry::Ns::CRenderDevice::RT_DestroyView(SPerViewRenderData* pViewData, Rende
 		m_pResourceProvider->FreeBuffer(pViewData->activeIndexBuffer);
 		m_pResourceProvider->FreeBuffer(pViewData->activeVertexBuffer);
 
-		m_pResourceProvider->FreeConstantBuffer(pViewData->vertexCB);
-		m_pResourceProvider->FreeConstantBuffer(pViewData->effectCB);
-		m_pResourceProvider->FreeConstantBuffer(pViewData->pixelCB);
-		m_pResourceProvider->FreeConstantBuffer(pViewData->textDimCB);
-
 		pViewData->view->GetRenderer()->Shutdown();
 
 		m_perViewRenderData.erase(iter);	
 
-		//Do a potential surface clear here 
+
 	}
 }

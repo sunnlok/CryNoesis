@@ -14,6 +14,11 @@
 #include "CrySystem/ConsoleRegistration.h"
 #include <NsGui/ResourceDictionary.h>
 #include "CryRenderer/IRenderAuxGeom.h"
+#include <NsCore/RegisterComponent.h>
+#include "Controls/MainWindow.h"
+#include "InputHandler.h"
+#include "ComponentRegistration.h"
+
 
 static std::unique_ptr<Cry::Ns::CImplementation> g_pImplementation;
 
@@ -81,10 +86,16 @@ Cry::Ns::CImplementation::CImplementation()
 		SetFontProvider(MakePtr<Ns::CFontProvider>());
 		SetTextureProvider(MakePtr<Ns::CTextureProvider>());
 	}	
-	const char* fonts[] = { "./#PT Root UI", "Arial", "Segoe UI Emoji" };
-	GUI::LoadApplicationResources("NocturnalStyle.xaml");
+	const char* fonts[] = { "weblysleekuisb", "weblysleekuisl", "Segoe UI Emoji" };
+	GUI::LoadApplicationResources("MenuResources.xaml");
 	Noesis::GUI::SetFontFallbacks( fonts, 3 );
 	Noesis::GUI::SetFontDefaultProperties(15, FontWeight_Normal, FontStretch_Normal, FontStyle_Normal);
+
+	Noesis::RegisterComponent<Cry::Ns::Components::MainMenu>();
+	Cry::Ns::Registration::RegisterInteractivityComponents();
+
+
+
 }
 
 Cry::Ns::CImplementation::~CImplementation()
@@ -97,6 +108,7 @@ void Cry::Ns::CImplementation::Init()
 {
 	
 	m_startTime = gEnv->pTimer->GetFrameStartTime();
+	m_pInputHandler = std::make_unique<CInputHandler>(this);
 	m_pRenderDevice = Noesis::MakePtr<Ns::CRenderDevice>();
 }
 
@@ -124,6 +136,7 @@ bool Cry::Ns::CImplementation::CreateView(const char* xamlPath, Vec2i dimensions
 		return false;
 
 	pView->SetSize(dimensions.x, dimensions.y);
+	pView->SetFlags(Noesis::RenderFlags::RenderFlags_PPAA);
 
 	m_pRenderDevice->AddView({ pView, dimensions.x, dimensions.y });
 
