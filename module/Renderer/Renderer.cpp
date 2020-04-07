@@ -17,10 +17,13 @@
 
 
 #include "StateDefinitions.h"
+#include "Core/ViewManager.h"
+#include "ViewRenderData.h"
+#include "CryRenderer/Pipeline/RenderPass.h"
 
 using namespace Cry;
 using namespace Ns::LayoutDefinitions;
-using namespace Cry::Noesis::Renderer;
+using namespace Cry::Ns::Renderer;
 
 static std::array<Ns::SShaderInfo, ::Noesis::Shader::Count> g_shaderInfo;
 static CCryNameTSCRC gTechCrc("Noesis");
@@ -81,10 +84,17 @@ static void RegisterLayouts(Renderer::IStageResourceProvider* pResourceProvider)
 	}
 }
 
+static Cry::Ns::CRenderDevice* g_pRenderDevice;
+Cry::Ns::CRenderDevice* Cry::Ns::CRenderDevice::Get()
+{
+	return g_pRenderDevice;
+}
 
 Ns::CRenderDevice::CRenderDevice()
 {
-	m_pPipeline = Renderer::Pipeline::GetOrCreateCustomPipeline();
+	g_pRenderDevice = this;
+
+	m_pPipeline = Cry::Renderer::Pipeline::GetOrCreateCustomPipeline();
 	m_pResourceProvider = m_pPipeline->GetResourceProvider();
 
 	//m_pNoesisShader = gEnv->pRenderer->EF_LoadShader("Noesis", g_layoutInfoList[0].mask);
@@ -98,7 +108,7 @@ Ns::CRenderDevice::CRenderDevice()
 
 Ns::CRenderDevice::~CRenderDevice()
 {
-
+	g_pRenderDevice = nullptr;
 }
 
 static ::Noesis::DeviceCaps g_Capabilities{
@@ -114,7 +124,7 @@ const ::Noesis::DeviceCaps& Ns::CRenderDevice::GetCaps() const
 {
 	string textName(label);
 	
-	Renderer::SRTCreationParams params = {
+	Cry::Renderer::SRTCreationParams params = {
 		textName,
 		width,
 		height,
@@ -131,7 +141,7 @@ const ::Noesis::DeviceCaps& Ns::CRenderDevice::GetCaps() const
 
 	textName.append("_Depth");
 
-	Renderer::SRTCreationParams depthParams = {
+	Cry::Renderer::SRTCreationParams depthParams = {
 		textName,
 		width,
 		height,
@@ -151,7 +161,7 @@ const ::Noesis::DeviceCaps& Ns::CRenderDevice::GetCaps() const
 {
 	auto pTarget = static_cast<Ns::CRenderTarget*>(surface);
 
-	Renderer::SRTCreationParams params = {
+	Cry::Renderer::SRTCreationParams params = {
 		label,
 		pTarget->GetColor()->GetWidth(),
 		pTarget->GetColor()->GetHeight(),
@@ -182,8 +192,6 @@ const ::Noesis::DeviceCaps& Ns::CRenderDevice::GetCaps() const
 	_smart_ptr<ITexture> pSmartText;
 	pSmartText.Assign_NoAddRef(pTexture);
 
-	if (m_pCurrentView)
-		m_pCurrentView->m_pTextures.push_back(pTexture);
 
 	return ::Noesis::MakePtr<Ns::CTextureWrapper>(std::move(pSmartText));
 }
@@ -262,7 +270,7 @@ void Ns::CRenderDevice::BeginTile(const ::Noesis::Tile& tile, uint32_t surfaceWi
 
 	
 
-	Renderer::Pipeline::Pass::SPassParams params{
+	Cry::Renderer::Pipeline::Pass::SPassParams params{
 		viewport,
 		m_pCurrentRenderTarget->GetColor(),
 		m_pCurrentRenderTarget->GetDepth(),
@@ -293,16 +301,16 @@ void Ns::CRenderDevice::EndRender()
 
 void* Ns::CRenderDevice::MapVertices(uint32_t bytes)
 {
-	if (m_pCurrentView->activeVertexBuffer != Renderer::Buffers::CINVALID_BUFFER)
+	if (m_pCurrentView->activeVertexBuffer != Cry::Renderer::Buffers::CINVALID_BUFFER)
 	{
 		m_pResourceProvider->FreeBuffer(m_pCurrentView->activeVertexBuffer);
 	}
 
-	Renderer::Buffers::SBufferParams params(
+	Cry::Renderer::Buffers::SBufferParams params(
 		bytes,
 		1,
-		Renderer::Buffers::EBufferBindType::Vertex,
-		Renderer::Buffers::EBufferUsage::Transient
+		Cry::Renderer::Buffers::EBufferBindType::Vertex,
+		Cry::Renderer::Buffers::EBufferUsage::Transient
 	);
 
 	m_pCurrentView->activeVertexBuffer = m_pResourceProvider->CreateOrUpdateBuffer(params);
@@ -318,16 +326,16 @@ void Ns::CRenderDevice::UnmapVertices()
 
 void* Ns::CRenderDevice::MapIndices(uint32_t bytes)
 {
-	if (m_pCurrentView->activeIndexBuffer != Renderer::Buffers::CINVALID_BUFFER)
+	if (m_pCurrentView->activeIndexBuffer != Cry::Renderer::Buffers::CINVALID_BUFFER)
 	{
 		m_pResourceProvider->FreeBuffer(m_pCurrentView->activeIndexBuffer);
 	}
 
-	Renderer::Buffers::SBufferParams params(
+	Cry::Renderer::Buffers::SBufferParams params(
 		bytes / 2,
 		2,
-		Renderer::Buffers::EBufferBindType::Index,
-		Renderer::Buffers::EBufferUsage::Transient
+		Cry::Renderer::Buffers::EBufferBindType::Index,
+		Cry::Renderer::Buffers::EBufferUsage::Transient
 	);
 
 	m_pCurrentView->activeIndexBuffer = m_pResourceProvider->CreateOrUpdateBuffer(params);
@@ -344,7 +352,7 @@ void Ns::CRenderDevice::UnmapIndices()
 
 void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 {
-	using namespace Renderer::Pipeline::Pass;
+	using namespace Cry::Renderer::Pipeline::Pass;
 
 	//The method or operation is not implemented.
 	auto& info = g_shaderInfo[batch.shader.v];
@@ -377,10 +385,10 @@ void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 		matrixBuffers.push_back(matrixPtr);
 
 		SMultiVlaueConstantBuffer matrixBuffer{
-			Renderer::Buffers::CINVALID_BUFFER,
+			Cry::Renderer::Buffers::CINVALID_BUFFER,
 			true,
-			(Renderer::Shader::EConstantSlot)0,
-			Renderer::Shader::EShaderStages::ssVertex,
+			(Cry::Renderer::Shader::EConstantSlot)0,
+			Cry::Renderer::Shader::EShaderStages::ssVertex,
 			matrixBuffers.empty() ? TArray<SBufferValuePtr>() : TArray(&matrixBuffers[0], matrixBuffers.size())
 		};
 		
@@ -422,10 +430,10 @@ void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 			}
 
 			SMultiVlaueConstantBuffer pixelBuffer{
-			Renderer::Buffers::CINVALID_BUFFER,
+			Cry::Renderer::Buffers::CINVALID_BUFFER,
 			true,
-			(Renderer::Shader::EConstantSlot)0,
-			Renderer::Shader::EShaderStages::ssPixel,
+			(Cry::Renderer::Shader::EConstantSlot)0,
+			Cry::Renderer::Shader::EShaderStages::ssPixel,
 			pixelBuffers.empty() ? TArray<SBufferValuePtr>() : TArray(&pixelBuffers[0], pixelBuffers.size())
 			};
 
@@ -459,10 +467,10 @@ void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 			textureBuffers.push_back(textureBuffer);
 
 			SMultiVlaueConstantBuffer textureValues{
-			Renderer::Buffers::CINVALID_BUFFER,
+			Cry::Renderer::Buffers::CINVALID_BUFFER,
 			true,
-			(Renderer::Shader::EConstantSlot)1,
-			Renderer::Shader::EShaderStages::ssVertex | Renderer::Shader::EShaderStages::ssPixel,
+			(Cry::Renderer::Shader::EConstantSlot)1,
+			Cry::Renderer::Shader::EShaderStages::ssVertex | Cry::Renderer::Shader::EShaderStages::ssPixel,
 			textureBuffers.empty() ? TArray<SBufferValuePtr>() : TArray(&textureBuffers[0], textureBuffers.size())
 			};
 
@@ -485,10 +493,10 @@ void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 			effectBuffers.push_back(effectBuffer);
 
 			SMultiVlaueConstantBuffer effectValues{
-			Renderer::Buffers::CINVALID_BUFFER,
+			Cry::Renderer::Buffers::CINVALID_BUFFER,
 			true,
-			(Renderer::Shader::EConstantSlot)2,
-			Renderer::Shader::EShaderStages::ssPixel,
+			(Cry::Renderer::Shader::EConstantSlot)2,
+			Cry::Renderer::Shader::EShaderStages::ssPixel,
 			effectBuffers.empty() ? TArray<SBufferValuePtr>() : TArray(&effectBuffers[0], effectBuffers.size())
 			};
 
@@ -615,103 +623,39 @@ void Cry::Ns::CRenderDevice::EndOffscreenRender()
 
 }
 
-void Cry::Ns::CRenderDevice::AddView(SViewInitParams viewParams)
+void Cry::Ns::CRenderDevice::RT_CheckAndUpdateViewTarget(Cry::Ns::ViewRenderData& viewData)
 {
-	m_pPipeline->ExecuteRenderThreadCommand([this, viewParams]() { RT_AddView(viewParams); });
-}
 
-void Cry::Ns::CRenderDevice::RT_AddView(SViewInitParams viewParams)
-{
-	auto pViewData = std::make_unique<SPerViewRenderData>();
-	pViewData->view = viewParams.view;
-
-	Renderer::Pipeline::SStageCallbacks callbacks{
-		[pView = pViewData.get(), this] (Renderer::Pipeline::StageRenderArguments& args){ RT_RenderView(pView, args); },
-		nullptr,
-		[pView = pViewData.get(), this](Renderer::Pipeline::StageDestructionsArguments& args){ RT_DestroyView(pView, args); }
-	};
-
-	string name;
-	name.Format("Noesis_View%u", m_viewID++);
-
-	auto pStage = m_pPipeline->RT_CreateRenderStage(name, CCrc32::Compute(name.c_str(),name.size(), 0), std::move(callbacks));
-	if (!pStage)
+	uint64 newRes = viewData.m_newRes.exchange(0);
+	if (newRes)
 	{
-		CryLogAlways("Failed to create noesis stage: %s", name);
-		return;
+		uint32 newWidth = (uint32)(newRes >> 32);
+		uint32 newHeight = (uint32)newRes;
+
+
+		UpdateViewRenderTargets(&viewData, (int)newWidth, (int)newHeight);
+
+		SPassParams passParams;
+		passParams.pColorTarget = viewData.viewColorTarget;
+		passParams.pDepthsTarget = viewData.viewDepthTarget;
+		passParams.viewPort = SRenderViewport(0, 0, newWidth, newHeight);
+		passParams.clearMask = BIT(2) | BIT(1);
+
+		m_pPipeline->RT_UpdatePassData(*viewData.stage, viewData.viewPass, passParams);
 	}
 
-	name.append("_MainPass");
 
-	Renderer::Pipeline::Pass::SPassCreationParams passParams;
-	passParams.passName = name;
-	passParams.passCrc = CCrc32::Compute(name);
-
-	string rtName = name;
-	rtName.append("_Color");
-
-	//Create render targets
-	Renderer::SRTCreationParams params = {
-		rtName,
-		viewParams.width,
-		viewParams.height,
-		Col_Transparent,
-		eTT_2D,
-		FT_NOMIPS | FT_DONT_STREAM | FT_USAGE_RENDERTARGET,
-		ETEX_Format::eTF_R8G8B8A8,
-		-1
-	};
-
-	pViewData->viewColorTarget = m_pResourceProvider->CreateRenderTarget(params);
-	//pViewData->viewColorTarget = m_pResourceProvider->GetCurrentColorTarget();
-
-	string deptRTName = name;
-
-	deptRTName.append("_Depth");
-	Renderer::SRTCreationParams depthParams = {
-		deptRTName,
-		viewParams.width,
-		viewParams.height,
-		Clr_FarPlane,
-		eTT_2D,
-		FT_NOMIPS | FT_DONT_STREAM | FT_USAGE_DEPTHSTENCIL,
-		ETEX_Format::eTF_S8,
-		-1
-	};
-
-	pViewData->viewDepthTarget = m_pResourceProvider->CreateRenderTarget(depthParams);
-
-	passParams.pColorTarget = pViewData->viewColorTarget;
-	passParams.pDepthsTarget = pViewData->viewDepthTarget;
-	passParams.viewPort = SRenderViewport(0, 0, viewParams.width, viewParams.height);
-	passParams.clearMask = BIT(2) | BIT(1);
-
-	pViewData->viewWidth = viewParams.width;
-	pViewData->viewHeight = viewParams.height;
-	pViewData->viewPass = m_pPipeline->RT_AllocatePass(*pStage, passParams);
-
-
-	/*Renderer::Buffers::SBufferParams idxBufferParams(DYNAMIC_IB_SIZE, 1, Renderer::Buffers::EBufferBindType::Index);
-	pViewData->activeIndexBuffer = m_pResourceProvider->CreateOrUpdateBuffer(idxBufferParams, pViewData->activeIndexBuffer);*/
-
-	/*Renderer::Buffers::SBufferParams vtxBufferParams(DYNAMIC_VB_SIZE, 1, Renderer::Buffers::EBufferBindType::Vertex);
-	pViewData->activeVertexBuffer = m_pResourceProvider->CreateOrUpdateBuffer(vtxBufferParams, pViewData->activeVertexBuffer);*/
-
-	pViewData->stage = pStage;
-
-	m_pCurrentView = &*pViewData;
-
-	pViewData->view->GetRenderer()->Init(this);
-	m_perViewRenderData.push_back(std::move(pViewData));
-	
-	
 }
 
-void Cry::Ns::CRenderDevice::RT_RenderView(SPerViewRenderData* pViewData, Renderer::Pipeline::StageRenderArguments& args)
+void Cry::Ns::CRenderDevice::RT_RenderView(Cry::Ns::ViewRenderData* pViewData, Cry::Renderer::Pipeline::StageRenderArguments& args)
 {
-	m_pCurrentView = pViewData;
+	if (!pViewData->pNsRenderer || !pViewData->stage)
+		return;
 
-	auto pRenderer = pViewData->view->GetRenderer();
+	m_pCurrentView = pViewData;
+	RT_CheckAndUpdateViewTarget(*pViewData);
+	
+	auto pRenderer = pViewData->pNsRenderer;
 
 	//Fix this to actual draw the last frame without clearing it when no data is available
 	pRenderer->UpdateRenderTree();
@@ -720,27 +664,140 @@ void Cry::Ns::CRenderDevice::RT_RenderView(SPerViewRenderData* pViewData, Render
 		pRenderer->RenderOffscreen();
 		pRenderer->Render();
 	}
+
 	//TODO: Replace with proper api
-	m_pPipeline->RT_StretchToColorTarget(m_pCurrentView->viewColorTarget, gBlendStateMask[1] | gDepthStateMasks[0]);
+	if(pViewData->bDrawToScreen)
+		m_pPipeline->RT_StretchToColorTarget(m_pCurrentView->viewColorTarget, gBlendStateMask[1] | gDepthStateMasks[0]);
 
 
 	m_pCurrentView = nullptr;
 }
 
-void Cry::Ns::CRenderDevice::RT_DestroyView(SPerViewRenderData* pViewData, Renderer::Pipeline::StageDestructionsArguments& args)
+void Cry::Ns::CRenderDevice::UpdateViewRenderTargets(Cry::Ns::ViewRenderData* perViewData, int newWidth, int newHeight)
 {
-	for (auto iter = m_perViewRenderData.begin(); iter != m_perViewRenderData.end(); ++iter)
-	{
-		if (iter->get() != pViewData)
-			continue;
+	//Create render targets
+	Cry::Renderer::SRTCreationParams params = {
+		"Noesis::View_Color",
+		newWidth,
+		newHeight,
+		Col_Transparent,
+		eTT_2D,
+		FT_NOMIPS | FT_DONT_STREAM | FT_USAGE_RENDERTARGET,
+		ETEX_Format::eTF_R8G8B8A8,
+		-1
+	};
 
-		m_pResourceProvider->FreeBuffer(pViewData->activeIndexBuffer);
-		m_pResourceProvider->FreeBuffer(pViewData->activeVertexBuffer);
+	perViewData->viewColorTarget = m_pResourceProvider->CreateRenderTarget(params);
+	//pViewData->viewColorTarget = m_pResourceProvider->GetCurrentColorTarget();
 
-		pViewData->view->GetRenderer()->Shutdown();
+	Cry::Renderer::SRTCreationParams depthParams = {
+		"Noesis::View_Depth",
+		newWidth,
+		newHeight,
+		Clr_FarPlane,
+		eTT_2D,
+		FT_NOMIPS | FT_DONT_STREAM | FT_USAGE_DEPTHSTENCIL,
+		ETEX_Format::eTF_S8,
+		-1
+	};
 
-		m_perViewRenderData.erase(iter);	
-
-
-	}
+	perViewData->viewDepthTarget = m_pResourceProvider->CreateRenderTarget(depthParams);
 }
+
+void Cry::Ns::CRenderDevice::UpdateViewSize(ViewRenderData* pView, uint32 width, uint32 height)
+{
+	uint64 res = (uint64)height;
+	res |= (uint64)(width) << 32;
+
+	pView->m_newRes = res;
+
+}
+
+std::unique_ptr<Cry::Ns::ViewRenderData> Cry::Ns::CRenderDevice::InitializeRenderViewData(ViewData& viewData)
+{
+	auto pViewRenderDataPtr = std::make_unique<Cry::Ns::ViewRenderData>();
+	auto pRenderData = pViewRenderDataPtr.get();
+	auto pViewData = &viewData;
+
+	m_pPipeline->ExecuteRenderThreadCommand([=]() {
+		RT_InitializeViewRenderer(*pRenderData, *pViewData);
+	});
+
+	return std::move(pViewRenderDataPtr);
+}
+
+void Cry::Ns::CRenderDevice::RT_DestroyView(Cry::Ns::ViewRenderData* pViewData, Cry::Renderer::Pipeline::StageDestructionsArguments& args)
+{
+
+	m_pResourceProvider->FreeBuffer(pViewData->activeIndexBuffer);
+	m_pResourceProvider->FreeBuffer(pViewData->activeVertexBuffer);
+
+	pViewData->pNsRenderer->Shutdown();
+}
+
+void Cry::Ns::CRenderDevice::RT_DestroyView(Cry::Ns::ViewRenderData* pRenderViewData)
+{
+	m_pPipeline->RT_RemoveStage(pRenderViewData->stage->hash);
+}
+
+void Cry::Ns::CRenderDevice::DestroyView(TRenderViewDataPtr pRenderData, ::Noesis::Ptr<::Noesis::IView> pView)
+{
+	//Extend lifetime to destruction on render thread
+	m_pPipeline->ExecuteRenderThreadCommand([pView,pThis = this, pData = pRenderData.release()]() {
+		auto pExtend = pView;
+		TRenderViewDataPtr pDataPtr(pData);
+		pThis->RT_DestroyView(pData);
+	});
+}
+
+void Cry::Ns::CRenderDevice::RT_InitializeViewRenderer(Cry::Ns::ViewRenderData& viewRenderData, ViewData& viewData)
+{
+	Cry::Renderer::Pipeline::SStageCallbacks callbacks{
+		[pView = &viewRenderData, this] (Cry::Renderer::Pipeline::StageRenderArguments& args){ RT_RenderView(pView, args); },
+		nullptr,
+		[pView = &viewRenderData, this](Cry::Renderer::Pipeline::StageDestructionsArguments& args){ RT_DestroyView(pView, args); }
+	};
+
+	string name;
+	name.Format("Noesis_View%u", m_viewID++);
+
+	auto pStage = m_pPipeline->RT_CreateRenderStage(name, CCrc32::Compute(name.c_str(), name.size(), 0), std::move(callbacks));
+	if (!pStage)
+	{
+		CryLogAlways("Failed to create noesis stage: %s", name);
+		return;
+	}
+
+	name.append("_MainPass");
+
+	Cry::Renderer::Pipeline::Pass::SPassCreationParams passParams;
+	passParams.passName = name;
+	passParams.passCrc = CCrc32::Compute(name);
+
+	UpdateViewRenderTargets(&viewRenderData, viewData.viewWidth, viewData.viewHeight);
+
+	passParams.pColorTarget = viewRenderData.viewColorTarget;
+	passParams.pDepthsTarget = viewRenderData.viewDepthTarget;
+	passParams.viewPort = SRenderViewport(0, 0, viewData.viewWidth, viewData.viewHeight);
+	passParams.clearMask = BIT(2) | BIT(1);
+
+	viewRenderData.viewWidth = viewData.viewWidth;
+	viewRenderData.viewHeight = viewData.viewHeight;
+	viewRenderData.viewPass = m_pPipeline->RT_AllocatePass(*pStage, passParams);
+
+
+	viewRenderData.stage = pStage;
+
+	viewRenderData.bDrawToScreen = (viewData.flags & Cry::Ns::ViewFlags::MainView) != 0 ? true : false;
+
+	m_pCurrentView = &viewRenderData;
+
+	auto pRenderer = viewData.pView->GetRenderer();
+
+	pRenderer->Init(this);
+	viewRenderData.pNsRenderer = pRenderer;
+}
+
+
+
+

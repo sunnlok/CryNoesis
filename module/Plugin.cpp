@@ -9,6 +9,7 @@
 
 Cry::Ns::CPlugin::~CPlugin()
 {
+	gEnv->pSystem->GetISystemEventDispatcher()->RemoveListener(this);
 	CImplementation::Destroy();
 }
 
@@ -23,8 +24,7 @@ bool Cry::Ns::CPlugin::Initialize(SSystemGlobalEnvironment& env, const SSystemIn
 }
 
 Cry::Ns::CImplementation* Cry::Ns::CPlugin::GetImpl()
-{
-	gEnv->pSystem->GetISystemEventDispatcher()->RemoveListener(this);
+{	
 	return CImplementation::Get();
 }
 
@@ -71,6 +71,11 @@ void Cry::Ns::CPlugin::OnSystemEvent(ESystemEvent event, UINT_PTR wparam, UINT_P
 
 		EnableUpdate(IEnginePlugin::EUpdateStep::BeforeRender, true);
 		EnableUpdate(IEnginePlugin::EUpdateStep::MainUpdate, true);
+	}
+	break;
+	case ESYSTEM_EVENT_DISPLAY_CHANGED:
+	{
+		GetImpl()->OnScreenSizeChanged();
 	}
 	break;
 	}

@@ -9,6 +9,7 @@ namespace Ns
 	using TViewList = std::vector<Noesis::Ptr<Noesis::IView>>;
 
 	class CInputHandler;
+	class ViewManager;
 
 	class CImplementation
 	{
@@ -24,19 +25,25 @@ namespace Ns
 
 		void Update(float delta);
 		void UpdateBeforeRender();
+		void OnScreenSizeChanged();
+
+		void RegisterVariables();
+		void LoadResources();
 
 		bool CreateView(const char* xamlPath, Vec2i dimensions);
 
-		TViewList& GetViewList() { return m_views; }
 	private:
+		ICVar* m_pResourceDictVar;
+
+
 		float m_lastFrameDelta = 0;
 
-		TViewList m_views;
 
 		Noesis::Ptr<CRenderDevice> m_pRenderDevice;
 		CTimeValue m_startTime;
 
 		std::unique_ptr<CInputHandler> m_pInputHandler;
+		std::unique_ptr<ViewManager> m_pViewManager;
 	};
 }
 }

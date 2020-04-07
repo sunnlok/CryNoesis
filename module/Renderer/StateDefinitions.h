@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Cry::Noesis::Renderer
+namespace Cry::Ns::Renderer
 {
 	constexpr uint32 CreateDepthMaskDisabled()
 	{

@@ -217,7 +217,7 @@ static int MapModifier(int in)
 
 bool Cry::Ns::CInputHandler::HandleMouseEvent(const SInputEvent& event, int mappedModifier)
 {
-	auto& views = m_pImplementation->GetViewList();
+	auto& views = Cry::Ns::ViewManager::Get()->GetViews();
 
 	int mouseKey = event.keyId - KI_MOUSE_BASE;
 
@@ -232,18 +232,18 @@ bool Cry::Ns::CInputHandler::HandleMouseEvent(const SInputEvent& event, int mapp
 		{
 			if (event.state == eIS_Pressed)
 			{
-				if (pView->MouseButtonDown(x, y, (Noesis::MouseButton)mouseKey))
+				if (pView.pView->MouseButtonDown(x, y, (Noesis::MouseButton)mouseKey))
 					return true;
 			}	
 			else if (event.state == eIS_Released)
 			{
-				if (pView->MouseButtonUp(x, y, (Noesis::MouseButton)mouseKey))
+				if (pView.pView->MouseButtonUp(x, y, (Noesis::MouseButton)mouseKey))
 					return true;
 			}
 		}
 		else if ((event.keyId == eKI_MouseWheelUp || event.keyId == eKI_MouseWheelDown) && event.state == eIS_Down)
 		{
-			if (pView->MouseWheel((int)x, (int)y, (int)event.value * 120))
+			if (pView.pView->MouseWheel((int)x, (int)y, (int)event.value * 120))
 				return true;
 		}
 		/*else if (event.keyId == eKI_MouseX || event.keyId == eKI_MouseY || event.keyId == eKI_MouseXAbsolute || event.keyId == eKI_MouseYAbsolute)
@@ -257,17 +257,17 @@ bool Cry::Ns::CInputHandler::HandleMouseEvent(const SInputEvent& event, int mapp
 
 bool Cry::Ns::CInputHandler::HandleKeyEvent(const SInputEvent& event, int mappedModifier)
 {
-	auto& views = m_pImplementation->GetViewList();
+	auto& views = Cry::Ns::ViewManager::Get()->GetViews();
 	for (auto& pView : views)
 	{
 		if (event.state == eIS_Pressed)
 		{
-			if (pView->KeyDown(m_keyMap[event.keyId]))
+			if (pView.pView->KeyDown(m_keyMap[event.keyId]))
 				return true;
 		}
 		else if (event.state == eIS_Released)
 		{
-			if (pView->KeyUp(m_keyMap[event.keyId]))
+			if (pView.pView->KeyUp(m_keyMap[event.keyId]))
 				return true;	
 		}
 	}
@@ -291,10 +291,10 @@ bool Cry::Ns::CInputHandler::OnInputEvent(const SInputEvent& event)
 
 bool Cry::Ns::CInputHandler::OnInputEventUI(const SUnicodeEvent& event)
 {
-	auto& views = m_pImplementation->GetViewList();
+	auto& views = Cry::Ns::ViewManager::Get()->GetViews();
 	for (auto& pView : views)
 	{
-		if (pView->Char(event.inputChar))
+		if (pView.pView->Char(event.inputChar))
 			return true;
 	}
 
@@ -315,11 +315,10 @@ void Cry::Ns::CInputHandler::OnHardwareMouseEvent(int iX, int iY, EHARDWAREMOUSE
 
 		gEnv->pHardwareMouse->GetHardwareMouseClientPosition(&x, &y);
 
-
-		auto& views = m_pImplementation->GetViewList();
+		auto& views = Cry::Ns::ViewManager::Get()->GetViews();
 		for (auto& pView : views)
 		{
-			if (pView->MouseMove((int)x, (int)y))
+			if (pView.pView->MouseMove((int)x, (int)y))
 				break;
 		}
 	}

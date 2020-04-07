@@ -6,6 +6,8 @@
 #include <atomic>
 #include "CryRenderer/Pipeline/IStageResources.h"
 
+
+
 namespace Noesis
 {
 	struct IView;
@@ -15,15 +17,10 @@ namespace Cry
 {
 	namespace Ns
 	{
+		struct ViewData;
+		struct ViewRenderData;
+
 		class CRenderTarget;
-
-		struct SViewInitParams
-		{
-			::Noesis::Ptr<::Noesis::IView> view;
-
-			int width;
-			int height;
-		};
 
 		struct SShaderInfo
 		{
@@ -37,39 +34,14 @@ namespace Cry
 		};
 		using TShaderInfoList = std::vector<SShaderInfo>;
 
-
-		struct SPerViewRenderData
-		{
-			::Noesis::Ptr<::Noesis::IView>			view;
-			Renderer::Pipeline::TStageBasePtr	stage;
-
-			uint32								viewPass;
-
-			_smart_ptr<ITexture>				viewColorTarget;
-			_smart_ptr<ITexture>				viewDepthTarget;
-
-			uintptr_t activeIndexBuffer		=	Renderer::Buffers::CINVALID_BUFFER;
-			uintptr_t activeVertexBuffer	=	Renderer::Buffers::CINVALID_BUFFER;
-			
-
-			//This is not ideal. Sadly there is no way to track constant buffers outside the renderer via smart pointer
-
-			uint32_t vertexCBHash;
-			uint32_t pixelCBHash;
-			uint32_t effectCBHash;
-			uint32_t texDimensionsCBHash;
-
-			uint32 viewWidth;
-			uint32 viewHeight;
-
-			std::vector<ITexture*> m_pTextures;
-		};
-		using TViewDataPtr = std::unique_ptr<SPerViewRenderData>;
-		using TViewDataList = std::vector<TViewDataPtr>;
+		using TRenderViewDataPtr = std::unique_ptr<ViewRenderData>;
 
 		class CRenderDevice final : public ::Noesis::RenderDevice
 		{
 		public:
+			static CRenderDevice* Get();
+
+
 			CRenderDevice();
 			virtual ~CRenderDevice();
 	
@@ -99,10 +71,17 @@ namespace Cry
 			virtual void DrawBatch(const ::Noesis::Batch& batch) override;
 			//~RenderDevice		
 
-			void AddView(SViewInitParams viewParams);
 
+			void UpdateViewSize(ViewRenderData* perViewData, uint32 width, uint32 height);
+
+
+			std::unique_ptr<ViewRenderData> InitializeRenderViewData(ViewData &viewData);
+			void DestroyView(TRenderViewDataPtr pRenderData, ::Noesis::Ptr<::Noesis::IView> pView);
 		protected:
-			Renderer::Pipeline::Pass::SInlineConstantParams CreateConstantParameters(const ::Noesis::Batch& batch);
+
+
+			void UpdateViewRenderTargets(ViewRenderData* perViewData, int newWidth, int newHeight);
+
 
 
 			void BeginActualRender();
@@ -110,19 +89,21 @@ namespace Cry
 			void BeginOffscreenRender();
 			void EndOffscreenRender();
 
-			void RT_AddView(SViewInitParams viewParams);
+			void RT_CheckAndUpdateViewTarget(Cry::Ns::ViewRenderData &ViewData);
 
-			void RT_RenderView(SPerViewRenderData* pViewData, Renderer::Pipeline::StageRenderArguments& args);
-			void RT_DestroyView(SPerViewRenderData* pViewData, Renderer::Pipeline::StageDestructionsArguments& args);
+			void RT_InitializeViewRenderer(ViewRenderData& viewRenderData, ViewData& viewData);
 
-			Renderer::IStageResourceProvider* m_pResourceProvider;
+			void RT_DestroyView(ViewRenderData* pRenderViewData);
+			void RT_RenderView(ViewRenderData* pViewData, Cry::Renderer::Pipeline::StageRenderArguments& args);
+			void RT_DestroyView(ViewRenderData* pViewData, Cry::Renderer::Pipeline::StageDestructionsArguments& args);
+
+			Cry::Renderer::IStageResourceProvider* m_pResourceProvider;
 
 
-			Renderer::Pipeline::ICustomPipelinePtr m_pPipeline;
+			Cry::Renderer::Pipeline::ICustomPipelinePtr m_pPipeline;
 
-			TViewDataList m_perViewRenderData;
 
-			SPerViewRenderData* m_pCurrentView = nullptr;
+			ViewRenderData* m_pCurrentView = nullptr;
 
 			bool m_bRenderingOffscreen = false;
 
@@ -130,7 +111,7 @@ namespace Cry
 
 			CRenderTarget* m_pCurrentRenderTarget;			
 
-			uint32 m_viewID;
+			uint32 m_viewID = 0;
 		};
 	}
 }

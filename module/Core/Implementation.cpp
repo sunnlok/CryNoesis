@@ -15,9 +15,10 @@
 #include <NsGui/ResourceDictionary.h>
 #include "CryRenderer/IRenderAuxGeom.h"
 #include <NsCore/RegisterComponent.h>
-#include "Controls/MainWindow.h"
+#include "Controls/ViewContainer.h"
 #include "InputHandler.h"
 #include "ComponentRegistration.h"
+#include "ViewManager.h"
 
 
 static std::unique_ptr<Cry::Ns::CImplementation> g_pImplementation;
@@ -63,10 +64,17 @@ static void LoadXamlCmd(IConsoleCmdArgs* pArgs)
 	g_pImplementation->CreateView(pArgs->GetArg(1), { gEnv->pRenderer->GetWidth(), gEnv->pRenderer->GetHeight() });
 }
 
+static void PlaySound(void* user, const char* filename, float volume)
+{
+	auto triggerID = CryAudio::StringToId(filename);
+	gEnv->pAudioSystem->ExecuteTrigger(triggerID);
+}
 
 Cry::Ns::CImplementation::CImplementation()
 {
-	ConsoleRegistrationHelper::AddCommand("Noesis.LoadXaml", &LoadXamlCmd);
+	RegisterVariables();
+	
+	m_pViewManager = std::make_unique<ViewManager>();
 
 	using namespace Noesis;
 
@@ -86,22 +94,40 @@ Cry::Ns::CImplementation::CImplementation()
 		SetFontProvider(MakePtr<Ns::CFontProvider>());
 		SetTextureProvider(MakePtr<Ns::CTextureProvider>());
 	}	
-	const char* fonts[] = { "weblysleekuisb", "weblysleekuisl", "Segoe UI Emoji" };
-	GUI::LoadApplicationResources("MenuResources.xaml");
-	Noesis::GUI::SetFontFallbacks( fonts, 3 );
+	const char* fonts[] = { "Segoe UI Emoji" };
+	//GUI::LoadApplicationResources("MenuResources.xaml");
+	Noesis::GUI::SetFontFallbacks( fonts, 1 );
 	Noesis::GUI::SetFontDefaultProperties(15, FontWeight_Normal, FontStretch_Normal, FontStyle_Normal);
 
-	Noesis::RegisterComponent<Cry::Ns::Components::MainMenu>();
+	Noesis::RegisterComponent<Cry::Ns::Components::ViewContainer>();
 	Cry::Ns::Registration::RegisterInteractivityComponents();
+	Noesis::GUI::SetPlaySoundCallback(nullptr, PlaySound);
 
-
-
+	LoadResources();
 }
 
 Cry::Ns::CImplementation::~CImplementation()
 {
-	m_views.clear();
+	m_pViewManager.reset();
+
 	Noesis::GUI::Shutdown();
+}
+
+void Cry::Ns::CImplementation::RegisterVariables()
+{
+	ConsoleRegistrationHelper::AddCommand("Noesis.LoadXaml", &LoadXamlCmd);
+
+
+	m_pResourceDictVar = ConsoleRegistrationHelper::RegisterString("Noesis.ResourceDictionary", "", 0, "Resource dictionary to load at startup.");
+
+}
+
+void Cry::Ns::CImplementation::LoadResources()
+{
+	//Make this able to be compiled in
+	string resources = m_pResourceDictVar->GetString();
+
+	Noesis::GUI::LoadApplicationResources(resources);
 }
 
 void Cry::Ns::CImplementation::Init()
@@ -109,12 +135,13 @@ void Cry::Ns::CImplementation::Init()
 	
 	m_startTime = gEnv->pTimer->GetFrameStartTime();
 	m_pInputHandler = std::make_unique<CInputHandler>(this);
-	m_pRenderDevice = Noesis::MakePtr<Ns::CRenderDevice>();
+
+	m_pRenderDevice.Reset(new Ns::CRenderDevice());
 }
 
 void Cry::Ns::CImplementation::Update(float delta)
 {
-
+	
 }
 
 void Cry::Ns::CImplementation::UpdateBeforeRender()
@@ -122,26 +149,22 @@ void Cry::Ns::CImplementation::UpdateBeforeRender()
 	auto curTime = gEnv->pTimer->GetFrameStartTime() - m_startTime;
 
 
-	for (auto& view : m_views)
-		view->Update(curTime.GetSeconds());
+	for (auto& view : m_pViewManager->GetViews())
+	{
+		view.pView->Update(curTime.GetSeconds());
+	}
+		
+}
+
+void Cry::Ns::CImplementation::OnScreenSizeChanged()
+{
+	m_pViewManager->NotifyRendererSizeChange();
+		
 }
 
 bool Cry::Ns::CImplementation::CreateView(const char* xamlPath, Vec2i dimensions)
 {
-	Noesis::Ptr<Noesis::FrameworkElement> xaml = Noesis::GUI::LoadXaml<Noesis::FrameworkElement>(xamlPath);
-
-
-	auto pView = Noesis::GUI::CreateView(xaml);
-	if (!pView.GetPtr())
-		return false;
-
-	pView->SetSize(dimensions.x, dimensions.y);
-	pView->SetFlags(Noesis::RenderFlags::RenderFlags_PPAA);
-
-	m_pRenderDevice->AddView({ pView, dimensions.x, dimensions.y });
-
-
-	m_views.emplace_back(std::move(pView));
+	m_pViewManager->CreateViewFromXaml(xamlPath);
 
 	return true;
 }

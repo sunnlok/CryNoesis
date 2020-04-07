@@ -31,6 +31,8 @@ add_sources("CryNoesis_Core.cpp"
 		"Core/InputHandler.cpp"
 		"Core/InputHandler.h"
 		"Core/ComponentRegistration.h"
+		"Core/ViewManager.cpp"
+		"Core/ViewManager.h"
 )
 
 add_sources("CryNoesis_Providers.cpp"
@@ -53,12 +55,13 @@ add_sources("CryNoesis_Rendering.cpp"
 		"Renderer/Renderer.h"
 		"Renderer/Texture.cpp"
 		"Renderer/Texture.h"
+		"Renderer/ViewRenderData.h"
 )
 
 add_sources("CryNoesis_Components.cpp"
 	SOURCE_GROUP "Components"
-		"Controls/MainWindow.h"
-		"Controls/MainWindow.cpp"
+		"Controls/ViewContainer.h"
+		"Controls/ViewContainer.cpp"
 )
 
 add_sources("CryNoesis_NsApp.cpp"

@@ -6,14 +6,14 @@
 
 namespace Cry::Ns::Components
 {
-	class MainMenu final : public ::Noesis::UserControl
+	class ViewContainer final : public ::Noesis::UserControl
 	{
 	public:
-		MainMenu();
+		ViewContainer();
 	private:
 		void InitializeComponent();
 		void OnLoaded(Noesis::BaseComponent*, const Noesis::RoutedEventArgs&);
 
-		NS_DECLARE_REFLECTION(MainMenu, Noesis::UserControl)
+		NS_DECLARE_REFLECTION(ViewContainer, Noesis::UserControl)
 	};
 }
