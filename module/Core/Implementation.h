@@ -1,5 +1,7 @@
 #pragma once
 #include "Renderer/Renderer.h"
+#include "INoesis.h"
+#include "ViewManager.h"
 
 
 namespace Cry
@@ -9,9 +11,8 @@ namespace Ns
 	using TViewList = std::vector<Noesis::Ptr<Noesis::IView>>;
 
 	class CInputHandler;
-	class ViewManager;
 
-	class CImplementation
+	class CImplementation : public Cry::INoesis
 	{
 	public:
 		static CImplementation* Instantiate();
@@ -32,6 +33,7 @@ namespace Ns
 
 		bool CreateView(const char* xamlPath, Vec2i dimensions);
 
+		virtual ViewManager* GetViewManager() const final;
 	private:
 		ICVar* m_pResourceDictVar;
 

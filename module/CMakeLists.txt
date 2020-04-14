@@ -23,6 +23,13 @@ add_sources("CryNoesis.cpp"
         "StdAfx.h"
 )
 
+add_sources("CryNoesis_Interface.cpp"
+	SOURCE_GROUP "Interface"
+	"../Interface/INoesis.h"
+	"../Interface/INoesisPlugin.h"
+	"../Interface/IViewManager.h"
+)
+
 add_sources("CryNoesis_Core.cpp"
 	SOURCE_GROUP "Core"
         "Core/Implementation.cpp"

@@ -66,7 +66,9 @@ static void LoadXamlCmd(IConsoleCmdArgs* pArgs)
 
 static void PlaySound(void* user, const char* filename, float volume)
 {
-	auto triggerID = CryAudio::StringToId(filename);
+	auto actualFilename = PathUtil::GetFileName(filename);
+	auto triggerID = CryAudio::StringToId(actualFilename);
+
 	gEnv->pAudioSystem->ExecuteTrigger(triggerID);
 }
 
@@ -167,5 +169,10 @@ bool Cry::Ns::CImplementation::CreateView(const char* xamlPath, Vec2i dimensions
 	m_pViewManager->CreateViewFromXaml(xamlPath);
 
 	return true;
+}
+
+Cry::Ns::ViewManager* Cry::Ns::CImplementation::GetViewManager() const
+{
+	return &*m_pViewManager;
 }
 

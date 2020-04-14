@@ -81,4 +81,9 @@ void Cry::Ns::CPlugin::OnSystemEvent(ESystemEvent event, UINT_PTR wparam, UINT_P
 	}
 }
 
+Cry::INoesis* Cry::Ns::CPlugin::GetNoesis()
+{
+	return CImplementation::Get();
+}
+
 CRYREGISTER_SINGLETON_CLASS(Cry::Ns::CPlugin)

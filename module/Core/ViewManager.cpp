@@ -2,6 +2,7 @@
 #include "ViewManager.h"
 #include <NsGui/IView.h>
 #include "Renderer/ViewRenderData.h"
+#include "CrySystem/ConsoleRegistration.h"
 
 using namespace Cry::Ns;
 
@@ -13,9 +14,58 @@ Cry::Ns::ViewManager* Cry::Ns::ViewManager::Get()
 	return g_pViewManager;
 }
 
+
+static void ActivateViewCMD(IConsoleCmdArgs* pArgs)
+{
+	if (pArgs->GetArgCount() != 2)
+		return;
+
+	int id = std::atoi(pArgs->GetArg(1));
+	
+	if (id)
+	{
+		auto view = g_pViewManager->GetViewData((uint16)id);
+		if (view)
+			g_pViewManager->SetViewActivated(*view, true);
+	}
+	else
+	{
+		auto view = g_pViewManager->FindViewData(pArgs->GetArg(1));
+		if (view)
+			g_pViewManager->SetViewActivated(*view, true);
+	}
+
+
+}
+
+static void DeactivateViewCMD(IConsoleCmdArgs* pArgs)
+{
+	if (pArgs->GetArgCount() != 2)
+		return;
+
+	int id = std::atoi(pArgs->GetArg(1));
+
+	if (id)
+	{
+		auto view = g_pViewManager->GetViewData((uint16)id);
+		if (view)
+			g_pViewManager->SetViewActivated(*view, false);
+	}
+	else
+	{
+		auto view = g_pViewManager->FindViewData(pArgs->GetArg(1));
+		if (view)
+			g_pViewManager->SetViewActivated(*view, false);
+	}
+}
+
 Cry::Ns::ViewManager::ViewManager()
 {
 	g_pViewManager = this;
+
+
+	ConsoleRegistrationHelper::AddCommand("Noesis.Views.Activate", ActivateViewCMD, 0, "Activate a noesis view either by name or id");
+	ConsoleRegistrationHelper::AddCommand("Noesis.Views.Deactivate", DeactivateViewCMD, 0, "Deactivates a noesis view either by name or id");
 }
 
 Cry::Ns::ViewManager::~ViewManager()
@@ -114,9 +164,37 @@ void Cry::Ns::ViewManager::SetViewActivated(uint16 viewID, bool bActivated)
 	if (view == m_views.end())
 		return;
 
+	SetViewActivated(*view, bActivated);
+}
+
+void Cry::Ns::ViewManager::SetViewActivated(const ViewDataBase& viewBase, bool bActivated)
+{
+	auto& view = static_cast<const ViewData&>(viewBase);
+
+	if (!view.pView.GetPtr())
+		return;
+
 	if (bActivated)
-		view->pView->Activate();
+		view.pView->Activate();
 	else
-		view->pView->Deactivate();
+		view.pView->Deactivate();
+}
+
+const Cry::Ns::ViewData* Cry::Ns::ViewManager::GetViewData(uint16 viewID)
+{
+	auto view = std::find(m_views.begin(), m_views.end(), viewID);
+	if (view == m_views.end())
+		return nullptr;
+
+	return &*view;
+}
+
+const Cry::Ns::ViewData* Cry::Ns::ViewManager::FindViewData(const char* name)
+{
+	auto view = std::find(m_views.begin(), m_views.end(), name);
+	if (view == m_views.end())
+		return nullptr;
+
+	return &*view;
 }
 
