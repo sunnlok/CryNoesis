@@ -94,14 +94,14 @@ Noesis::Ptr<Noesis::Stream> Cry::Ns::CXamlProvider::LoadXaml(const char* uri)
 void Cry::Ns::CXamlProvider::ReloadAllXaml()
 {
 	for (auto& xaml : m_xamls)
-		mXamlChanged(xaml.c_str());
+		RaiseXamlChanged(xaml.c_str());
 }
 
 void Cry::Ns::CXamlProvider::ReloadSpecificXaml(const char* uri)
 {
 	auto xaml = m_xamls.find(uri);
 	if (xaml != m_xamls.end())
-		mXamlChanged(xaml->c_str());
+		RaiseXamlChanged(xaml->c_str());
 }
 
 void Cry::Ns::CXamlProvider::AddSearchPath(const char* uri)

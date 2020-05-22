@@ -1,3 +1,4 @@
+#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -236,3 +237,4 @@ NS_IMPLEMENT_REFLECTION_ENUM(ComparisonConditionType, "NoesisApp.ComparisonCondi
 
 const Noesis::DependencyProperty* NoesisApp::DataTrigger::ValueProperty;
 const Noesis::DependencyProperty* NoesisApp::DataTrigger::ComparisonProperty;
+

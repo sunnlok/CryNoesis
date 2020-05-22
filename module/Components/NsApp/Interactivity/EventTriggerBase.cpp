@@ -1,3 +1,4 @@
+#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -322,3 +323,4 @@ NS_IMPLEMENT_REFLECTION(EventTriggerBase, "NoesisApp.EventTriggerBase")
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* EventTriggerBase::SourceObjectProperty;
 const Noesis::DependencyProperty* EventTriggerBase::SourceNameProperty;
+

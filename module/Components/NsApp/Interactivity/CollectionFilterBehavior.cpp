@@ -1,3 +1,4 @@
+#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -175,3 +176,4 @@ NS_IMPLEMENT_REFLECTION(CollectionFilterBehavior, "NoesisGUIExtensions.Collectio
 const Noesis::DependencyProperty* CollectionFilterBehavior::PredicateProperty;
 const Noesis::DependencyProperty* CollectionFilterBehavior::ItemsSourceProperty;
 const Noesis::DependencyProperty* CollectionFilterBehavior::FilteredItemsProperty;
+

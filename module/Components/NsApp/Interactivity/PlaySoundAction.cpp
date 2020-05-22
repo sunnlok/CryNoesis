@@ -1,3 +1,4 @@
+#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -60,7 +61,7 @@ void PlaySoundAction::Invoke(Noesis::BaseComponent*)
     const char* source = GetSource().Get();
     if (GetAssociatedObject() != 0 && !Noesis::StrIsNullOrEmpty(source))
     {
-        Noesis::GUI::PlaySound(source, GetVolume());
+        Noesis::GUI::PlayAudio(source, GetVolume());
     }
 }
 
@@ -77,3 +78,4 @@ NS_IMPLEMENT_REFLECTION(PlaySoundAction, "NoesisApp.PlaySoundAction")
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* PlaySoundAction::SourceProperty;
 const Noesis::DependencyProperty* PlaySoundAction::VolumeProperty;
+

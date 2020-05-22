@@ -1,3 +1,4 @@
+#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -214,3 +215,4 @@ const Noesis::DependencyProperty* KeyTrigger::KeyProperty;
 const Noesis::DependencyProperty* KeyTrigger::ModifiersProperty;
 const Noesis::DependencyProperty* KeyTrigger::ActiveOnFocusProperty;
 const Noesis::DependencyProperty* KeyTrigger::FiredOnProperty;
+

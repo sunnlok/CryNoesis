@@ -5,6 +5,9 @@
 
 namespace Cry::Ns
 {
+	class CImplementation;
+
+
 	class CInputHandler : public IInputEventListener, IHardwareMouseEventListener
 	{
 	public:

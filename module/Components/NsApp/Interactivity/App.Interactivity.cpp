@@ -1,3 +1,4 @@
+#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -79,3 +80,4 @@ void Cry::Ns::Registration::RegisterInteractivityComponents()
     NS_REGISTER_COMPONENT(Noesis::EnumConverter<NoesisApp::GamepadButton>)
     NS_REGISTER_COMPONENT(Noesis::EnumConverter<NoesisApp::ControlStoryboardOption>)
 }
+

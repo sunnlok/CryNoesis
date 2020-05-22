@@ -3,6 +3,11 @@
 #include "Implementation.h"
 #include "CryInput/IHardwareMouse.h"
 
+#include <NsGui/IView.h>
+#include <NsGui/InputEnums.h>
+
+
+
 Cry::Ns::CInputHandler::CInputHandler(CImplementation* pImpl)
 	: m_pImplementation(pImpl)
 {

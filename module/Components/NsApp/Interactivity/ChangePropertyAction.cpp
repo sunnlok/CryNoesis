@@ -1,3 +1,4 @@
+#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -295,3 +296,4 @@ const Noesis::DependencyProperty* ChangePropertyAction::PropertyNameProperty;
 const Noesis::DependencyProperty* ChangePropertyAction::ValueProperty;
 const Noesis::DependencyProperty* ChangePropertyAction::DurationProperty;
 const Noesis::DependencyProperty* ChangePropertyAction::IncrementProperty;
+

@@ -1,3 +1,4 @@
+#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -99,3 +100,4 @@ bool StringFilterPredicate::NeedsRefresh(BaseComponent* item, const char* proper
 NS_BEGIN_COLD_REGION
 
 NS_IMPLEMENT_REFLECTION_(StringFilterPredicate)
+

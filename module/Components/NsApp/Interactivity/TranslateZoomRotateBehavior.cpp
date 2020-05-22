@@ -1,3 +1,4 @@
+#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -401,3 +402,4 @@ const Noesis::DependencyProperty* TranslateZoomRotateBehavior::ConstrainToParent
 const Noesis::DependencyProperty* TranslateZoomRotateBehavior::MinimumScaleProperty;
 const Noesis::DependencyProperty* TranslateZoomRotateBehavior::MaximumScaleProperty;
 const Noesis::DependencyProperty* TranslateZoomRotateBehavior::WheelSensitivityProperty;
+

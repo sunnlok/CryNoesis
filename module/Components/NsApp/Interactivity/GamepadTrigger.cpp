@@ -1,3 +1,4 @@
+#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -207,3 +208,4 @@ NS_IMPLEMENT_REFLECTION_ENUM(GamepadButton, "NoesisGUIExtensions.GamepadButton")
 const Noesis::DependencyProperty* GamepadTrigger::ButtonProperty;
 const Noesis::DependencyProperty* GamepadTrigger::ActiveOnFocusProperty;
 const Noesis::DependencyProperty* GamepadTrigger::FiredOnProperty;
+

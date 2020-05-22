@@ -95,7 +95,7 @@ Cry::Ns::CImplementation::CImplementation()
 		SetXamlProvider(MakePtr<Ns::CXamlProvider>());
 		SetFontProvider(MakePtr<Ns::CFontProvider>());
 		SetTextureProvider(MakePtr<Ns::CTextureProvider>());
-	}	
+	}
 	const char* fonts[] = { "Segoe UI Emoji" };
 	//GUI::LoadApplicationResources("MenuResources.xaml");
 	Noesis::GUI::SetFontFallbacks( fonts, 1 );
@@ -103,7 +103,7 @@ Cry::Ns::CImplementation::CImplementation()
 
 	Noesis::RegisterComponent<Cry::Ns::Components::ViewContainer>();
 	Cry::Ns::Registration::RegisterInteractivityComponents();
-	Noesis::GUI::SetPlaySoundCallback(nullptr, PlaySound);
+	Noesis::GUI::SetPlayAudioCallback(nullptr, PlaySound);
 
 	LoadResources();
 }

@@ -7,7 +7,12 @@ if (NOT PLUGIN_Noesis)
 	return()
 endif()
 
+
 set(NS_SDK "${SDK_DIR}/Noesis" CACHE PATH "Noesis sdk path")
+
+
+set(NS_LICENSE_NAME "" CACHE STRING "The noesis Licsense Name")
+set(NS_LICENSE_KEY "" CACHE STRING "The noesis Licsense Key")
 
 if(NOT EXISTS ${NS_SDK})
  message("Noesis sdk path not found at: ${NS_SDK}")
@@ -187,13 +192,17 @@ target_include_directories(${THIS_PROJECT}
   ../Interface
 )
 
-find_library(Noesis Noesis PATHS "${NS_SDK}/Lib/windows_x86_64")
-target_link_libraries(${THIS_PROJECT} PRIVATE "${Noesis}")
+
+unset(${NoesisLib} CACHE)
+find_library(NoesisLib NAMES Noesis PATHS "${NS_SDK}/Lib/windows_x86_64")
+target_link_libraries(${THIS_PROJECT} PRIVATE "${NoesisLib}")
 
 #Enable cpp 17 support
 set_target_properties(${THIS_PROJECT} PROPERTIES CXX_STANDARD 17)
 #Enable edit and continue support
 target_compile_options( ${THIS_PROJECT} PRIVATE /ZI )
+
+target_compile_definitions(${THIS_PROJECT} PRIVATE NS_LICENSE_KEY=${NS_LICENSE_KEY} NS_LICENSE_NAME=${NS_LICENSE_NAME}) 
 
 deploy_runtime_files(${NS_SDK}/Bin/windows_x86_64/Noesis.dll)
 #deploy_runtime_files(${NS_SDK}/Bin/windows_x86_64/NoesisApp.dll)

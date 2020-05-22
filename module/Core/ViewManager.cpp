@@ -1,8 +1,16 @@
 #include "StdAfx.h"
 #include "ViewManager.h"
+
+#include <NsCore/Noesis.h>
+#include <NsGui/IntegrationAPI.h>
+#include <NsGui/FrameworkElement.h>
+#include <NsGui/IRenderer.h>
 #include <NsGui/IView.h>
+
 #include "Renderer/ViewRenderData.h"
 #include "CrySystem/ConsoleRegistration.h"
+#include "Renderer/Renderer.h"
+
 
 using namespace Cry::Ns;
 

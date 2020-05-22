@@ -1,4 +1,6 @@
 #pragma once
+#include "CryRenderer/Pipeline/RendererDefinitions.h"
+#include "CryRenderer/Pipeline/IPipeline.h"
 
 namespace Cry::Ns
 {
