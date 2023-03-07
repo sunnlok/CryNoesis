@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -255,30 +254,6 @@ void MouseDragElementBehavior::UpdatePosition()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void MouseDragElementBehavior::OnXChanged(DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs& e)
-{
-    MouseDragElementBehavior* behavior = (MouseDragElementBehavior*)d;
-    behavior->UpdatePosition(*static_cast<const float*>(e.newValue), behavior->GetY());
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void MouseDragElementBehavior::OnYChanged(DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs& e)
-{
-    MouseDragElementBehavior* behavior = (MouseDragElementBehavior*)d;
-    behavior->UpdatePosition(behavior->GetX(), *static_cast<const float*>(e.newValue));
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void MouseDragElementBehavior::OnConstrainToParentBoundsChanged(DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs&)
-{
-    MouseDragElementBehavior* behavior = (MouseDragElementBehavior*)d;
-    behavior->UpdatePosition(behavior->GetX(), behavior->GetY());
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 NS_BEGIN_COLD_REGION
 
 NS_IMPLEMENT_REFLECTION(MouseDragElementBehavior, "NoesisApp.MouseDragElementBehavior")
@@ -287,20 +262,28 @@ NS_IMPLEMENT_REFLECTION(MouseDragElementBehavior, "NoesisApp.MouseDragElementBeh
     NsEvent("Dragging", &MouseDragElementBehavior::mDragging);
     NsEvent("DragFinished", &MouseDragElementBehavior::mDragFinished);
 
+    auto OnPositionChanged = [](Noesis::DependencyObject* d,
+        const Noesis::DependencyPropertyChangedEventArgs&)
+    {
+        MouseDragElementBehavior* behavior = (MouseDragElementBehavior*)d;
+        behavior->UpdatePosition(behavior->GetX(), behavior->GetY());
+    };
+
     Noesis::UIElementData* data = NsMeta<Noesis::UIElementData>(Noesis::TypeOf<SelfClass>());
     data->RegisterProperty<float>(XProperty, "X",
         Noesis::PropertyMetadata::Create(FLT_NAN,
-            Noesis::PropertyChangedCallback(OnXChanged)));
+            Noesis::PropertyChangedCallback(OnPositionChanged)));
     data->RegisterProperty<float>(YProperty, "Y",
         Noesis::PropertyMetadata::Create(FLT_NAN,
-            Noesis::PropertyChangedCallback(OnYChanged)));
+            Noesis::PropertyChangedCallback(OnPositionChanged)));
     data->RegisterProperty<bool>(ConstrainToParentBoundsProperty, "ConstrainToParentBounds",
         Noesis::PropertyMetadata::Create(false,
-            Noesis::PropertyChangedCallback(OnConstrainToParentBoundsChanged)));
+            Noesis::PropertyChangedCallback(OnPositionChanged)));
 }
+
+NS_END_COLD_REGION
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* MouseDragElementBehavior::XProperty;
 const Noesis::DependencyProperty* MouseDragElementBehavior::YProperty;
 const Noesis::DependencyProperty* MouseDragElementBehavior::ConstrainToParentBoundsProperty;
-

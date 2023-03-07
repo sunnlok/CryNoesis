@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -56,16 +55,17 @@ NoesisApp::TriggerCollection* Interaction::GetTriggers(const Noesis::DependencyO
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void Interaction::OnBehaviorsChanged(Noesis::DependencyObject* d,
+static void OnBehaviorsChanged(Noesis::DependencyObject* d,
     const Noesis::DependencyPropertyChangedEventArgs& e)
 {
-    BehaviorCollection* oldBehaviors = *static_cast<const Noesis::Ptr<BehaviorCollection>*>(e.oldValue);
+    BehaviorCollection* oldBehaviors = e.OldValue<Noesis::Ptr<BehaviorCollection>>();
     if (oldBehaviors != 0)
     {
+        NS_ASSERT(oldBehaviors->GetAssociatedObject() == d);
         oldBehaviors->Detach();
     }
 
-    BehaviorCollection* newBehaviors = *static_cast<const Noesis::Ptr<BehaviorCollection>*>(e.newValue);
+    BehaviorCollection* newBehaviors = e.NewValue<Noesis::Ptr<BehaviorCollection>>();
     if (newBehaviors != 0)
     {
         NS_ASSERT(newBehaviors->GetAssociatedObject() == 0);
@@ -74,16 +74,17 @@ void Interaction::OnBehaviorsChanged(Noesis::DependencyObject* d,
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void Interaction::OnTriggersChanged(Noesis::DependencyObject* d,
+static void OnTriggersChanged(Noesis::DependencyObject* d,
     const Noesis::DependencyPropertyChangedEventArgs& e)
 {
-    TriggerCollection* oldTriggers = *static_cast<const Noesis::Ptr<TriggerCollection>*>(e.oldValue);
+    TriggerCollection* oldTriggers = e.OldValue<Noesis::Ptr<TriggerCollection>>();
     if (oldTriggers != 0)
     {
+        NS_ASSERT(oldTriggers->GetAssociatedObject() == d);
         oldTriggers->Detach();
     }
 
-    TriggerCollection* newTriggers = *static_cast<const Noesis::Ptr<TriggerCollection>*>(e.newValue);
+    TriggerCollection* newTriggers = e.NewValue<Noesis::Ptr<TriggerCollection>>();
     if (newTriggers != 0)
     {
         NS_ASSERT(newTriggers->GetAssociatedObject() == 0);
@@ -98,12 +99,13 @@ NS_IMPLEMENT_REFLECTION(Interaction, "NoesisApp.Interaction")
 {
     Noesis::DependencyData* data = NsMeta<Noesis::DependencyData>(Noesis::TypeOf<SelfClass>());
     data->RegisterProperty<Noesis::Ptr<BehaviorCollection>>(BehaviorsProperty, "Behaviors",
-        Noesis::PropertyMetadata::Create(Noesis::Ptr<BehaviorCollection>(), &Interaction::OnBehaviorsChanged));
+        Noesis::PropertyMetadata::Create(Noesis::Ptr<BehaviorCollection>(), OnBehaviorsChanged));
     data->RegisterProperty<Noesis::Ptr<TriggerCollection>>(TriggersProperty, "Triggers",
-        Noesis::PropertyMetadata::Create(Noesis::Ptr<TriggerCollection>(), &Interaction::OnTriggersChanged));
+        Noesis::PropertyMetadata::Create(Noesis::Ptr<TriggerCollection>(), OnTriggersChanged));
 }
+
+NS_END_COLD_REGION
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* Interaction::BehaviorsProperty;
 const Noesis::DependencyProperty* Interaction::TriggersProperty;
-

@@ -120,7 +120,7 @@ const ::Noesis::DeviceCaps& Ns::CRenderDevice::GetCaps() const
 	return g_Capabilities;
 }
 
-::Noesis::Ptr<::Noesis::RenderTarget> Ns::CRenderDevice::CreateRenderTarget(const char* label, uint32_t width, uint32_t height, uint32_t sampleCount)
+::Noesis::Ptr<::Noesis::RenderTarget> Ns::CRenderDevice::CreateRenderTarget(const char* label, uint32_t width, uint32_t height, uint32_t sampleCount, bool needsStencil)
 {
 	string textName(label);
 	

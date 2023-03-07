@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -6,11 +5,24 @@
 
 
 #include <NsApp/SetFocusAction.h>
-#include <NsCore/ReflectionImplementEmpty.h>
+#include <NsGui/UIElementData.h>
+#include <NsCore/ReflectionImplement.h>
 
 
 using namespace NoesisApp;
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+bool SetFocusAction::GetEngage() const
+{
+    return GetValue<bool>(EngageProperty);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SetFocusAction::SetEngage(bool value)
+{
+    SetValue<bool>(EngageProperty, value);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 Noesis::Ptr<Noesis::Freezable> SetFocusAction::CreateInstanceCore() const
@@ -24,12 +36,21 @@ void SetFocusAction::Invoke(Noesis::BaseComponent*)
     Noesis::UIElement* element = GetTarget();
     if (element != 0)
     {
-        element->Focus();
+        element->Focus(GetEngage());
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 NS_BEGIN_COLD_REGION
 
-NS_IMPLEMENT_REFLECTION_(SetFocusAction, "NoesisGUIExtensions.SetFocusAction")
+NS_IMPLEMENT_REFLECTION(SetFocusAction, "NoesisGUIExtensions.SetFocusAction")
+{
+    Noesis::UIElementData* data = NsMeta<Noesis::UIElementData>(Noesis::TypeOf<SetFocusAction>());
+    data->RegisterProperty<bool>(EngageProperty, "Engage",
+        Noesis::PropertyMetadata::Create(true));
+}
 
+NS_END_COLD_REGION
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+const Noesis::DependencyProperty* SetFocusAction::EngageProperty;

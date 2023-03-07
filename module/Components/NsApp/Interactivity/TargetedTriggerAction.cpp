@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -8,6 +7,8 @@
 #include <NsApp/TargetedTriggerAction.h>
 #include <NsGui/DependencyData.h>
 #include <NsGui/FrameworkElement.h>
+#include <NsGui/Binding.h>
+#include <NsGui/BindingOperations.h>
 #include <NsCore/ReflectionImplement.h>
 #include <NsCore/String.h>
 
@@ -90,6 +91,12 @@ void TargetedTriggerAction::OnDetaching()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+Noesis::BaseComponent* TargetedTriggerAction::GetTargetNameResolver() const
+{
+    return GetValue<Noesis::Ptr<BaseComponent>>(TargetNameResolverProperty);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 void TargetedTriggerAction::UpdateTarget(DependencyObject* associatedObject)
 {
     BaseComponent* oldTarget = mTarget;
@@ -98,16 +105,26 @@ void TargetedTriggerAction::UpdateTarget(DependencyObject* associatedObject)
     if (associatedObject != 0)
     {
         BaseComponent* targetObject = GetTargetObject();
-        const char* targetName = GetTargetName();
-
         if (targetObject != 0)
         {
             newTarget = targetObject;
         }
-        else if (!Noesis::StrIsNullOrEmpty(targetName))
+        else if (!Noesis::StrIsNullOrEmpty(GetTargetName()))
         {
-            Noesis::FrameworkElement* element = Noesis::DynamicCast<Noesis::FrameworkElement*>(associatedObject);
-            newTarget = element != 0 ? element->FindName(targetName) : 0;
+            if (Noesis::BindingOperations::GetBinding(this, TargetNameResolverProperty) != nullptr)
+            {
+                newTarget = GetTargetNameResolver();
+                if (newTarget != nullptr)
+                {
+                    // Remove binding once we have found the TargetName object because keeping it
+                    // stored in this property could create circular references and memory leaks
+                    Noesis::BindingOperations::ClearBinding(this, TargetNameResolverProperty);
+                }
+            }
+            else
+            {
+                newTarget = mTarget;
+            }
         }
     }
 
@@ -175,22 +192,6 @@ void TargetedTriggerAction::OnTargetDestroyed(DependencyObject*)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void TargetedTriggerAction::OnTargetObjectChanged(DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs&)
-{
-    TargetedTriggerAction* action = static_cast<TargetedTriggerAction*>(d);
-    action->UpdateTarget(action->GetAssociatedObject());
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void TargetedTriggerAction::OnTargetNameChanged(DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs&)
-{
-    TargetedTriggerAction* action = static_cast<TargetedTriggerAction*>(d);
-    action->UpdateTarget(action->GetAssociatedObject());
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 NS_BEGIN_COLD_REGION
 
 NS_IMPLEMENT_REFLECTION(TargetedTriggerAction, "NoesisApp.TargetedTriggerAction")
@@ -198,13 +199,38 @@ NS_IMPLEMENT_REFLECTION(TargetedTriggerAction, "NoesisApp.TargetedTriggerAction"
     Noesis::DependencyData* data = NsMeta<Noesis::DependencyData>(Noesis::TypeOf<SelfClass>());
     data->RegisterProperty<Noesis::Ptr<BaseComponent>>(TargetObjectProperty, "TargetObject",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<BaseComponent>(),
-            Noesis::PropertyChangedCallback(OnTargetObjectChanged)));
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs&)
+    {
+        TargetedTriggerAction* action = (TargetedTriggerAction*)d;
+        action->UpdateTarget(action->GetAssociatedObject());
+    })));
     data->RegisterProperty<Noesis::String>(TargetNameProperty, "TargetName",
         Noesis::PropertyMetadata::Create(Noesis::String(),
-            Noesis::PropertyChangedCallback(OnTargetNameChanged)));
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs& e)
+    {
+        TargetedTriggerAction* action = static_cast<TargetedTriggerAction*>(d);
+        const char* targetName = e.NewValue<Noesis::String>().Str();
+        Noesis::Ptr<Noesis::Binding> binding = *new Noesis::Binding("", targetName);
+        Noesis::BindingOperations::SetBinding(action, TargetNameResolverProperty, binding);
+    })));
+    data->RegisterProperty<Noesis::Ptr<BaseComponent>>(TargetNameResolverProperty,
+        ".TargetNameResolver", Noesis::PropertyMetadata::Create(Noesis::Ptr<BaseComponent>(),
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs&)
+    {
+        TargetedTriggerAction* action = (TargetedTriggerAction*)d;
+        if (Noesis::BindingOperations::GetBinding(action, TargetNameResolverProperty) != nullptr)
+        {
+            action->UpdateTarget(action->GetAssociatedObject());
+        }
+    })));
 }
+
+NS_END_COLD_REGION
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* TargetedTriggerAction::TargetObjectProperty;
 const Noesis::DependencyProperty* TargetedTriggerAction::TargetNameProperty;
-
+const Noesis::DependencyProperty* TargetedTriggerAction::TargetNameResolverProperty;

@@ -54,14 +54,13 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///
 ///    <UserControl
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions"
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
 ///      xmlns:noesis="clr-namespace:NoesisGUIExtensions;assembly=Noesis.GUI.Extensions">
-///      <i:Interaction.Triggers>
+///      <b:Interaction.Triggers>
 ///        <noesis:GamepadTrigger FiredOn="ButtonDown" Button="Cancel">
-///          <i:InvokeCommandAction Command="{Binding ExitCommand}" />
+///          <b:InvokeCommandAction Command="{Binding ExitCommand}" />
 ///        </noesis:GamepadTrigger>
-///      <i:Interaction.Triggers>
+///      <b:Interaction.Triggers>
 ///      ...
 ///    </UserControl>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,7 +118,7 @@ private:
     void OnButtonPress(Noesis::BaseComponent* sender, const Noesis::KeyEventArgs& e);
 
     void RegisterSource();
-    void UnregisterSource();
+    void UnregisterSource(GamepadTriggerFiredOn firedOn);
 
     void OnSourceDestroyed(DependencyObject* obj);
 

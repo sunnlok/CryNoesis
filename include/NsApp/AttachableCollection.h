@@ -9,6 +9,7 @@
 
 
 #include <NsCore/Noesis.h>
+#include <NsCore/ReflectionImplement.h>
 #include <NsGui/FreezableCollection.h>
 #include <NsApp/IAttachedObject.h>
 

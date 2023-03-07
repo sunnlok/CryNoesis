@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -9,6 +8,7 @@
 #include <NsGui/DependencyData.h>
 #include <NsGui/Storyboard.h>
 #include <NsGui/IntegrationAPI.h>
+#include <NsGui/Uri.h>
 #include <NsCore/ReflectionImplement.h>
 
 
@@ -58,8 +58,8 @@ Noesis::Ptr<Noesis::Freezable> PlaySoundAction::CreateInstanceCore() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void PlaySoundAction::Invoke(Noesis::BaseComponent*)
 {
-    const char* source = GetSource().Get();
-    if (GetAssociatedObject() != 0 && !Noesis::StrIsNullOrEmpty(source))
+    const Noesis::Uri& source = GetSource();
+    if (GetAssociatedObject() != 0 && !Noesis::StrIsEmpty(source.Str()))
     {
         Noesis::GUI::PlayAudio(source, GetVolume());
     }
@@ -75,7 +75,8 @@ NS_IMPLEMENT_REFLECTION(PlaySoundAction, "NoesisApp.PlaySoundAction")
     data->RegisterProperty<float>(VolumeProperty, "Volume", Noesis::PropertyMetadata::Create(0.5f));
 }
 
+NS_END_COLD_REGION
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* PlaySoundAction::SourceProperty;
 const Noesis::DependencyProperty* PlaySoundAction::VolumeProperty;
-

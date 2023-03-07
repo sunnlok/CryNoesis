@@ -48,10 +48,6 @@ protected:
     // Called when the storyboard property has changed
     virtual void OnStoryboardChanged(const Noesis::DependencyPropertyChangedEventArgs& e);
 
-private:
-    static void OnStoryboardChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-
     NS_DECLARE_REFLECTION(StoryboardTrigger, TriggerBase)
 };
 

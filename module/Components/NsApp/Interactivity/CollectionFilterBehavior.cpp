@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -87,7 +86,7 @@ void CollectionFilterBehavior::FilterItems()
 
     for (int i = 0; i < numItems; ++i)
     {
-        Noesis::BaseComponent* item = list->GetComponent(i);
+        Noesis::Ptr<Noesis::BaseComponent> item = list->GetComponent(i);
         if (predicate == nullptr || predicate->Matches(item))
         {
             filtered->Add(item);
@@ -126,37 +125,6 @@ void CollectionFilterBehavior::UnregisterPredicate(FilterPredicate* predicate)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void CollectionFilterBehavior::OnPredicateChanged(Noesis::DependencyObject*  d,
-    const Noesis::DependencyPropertyChangedEventArgs& e)
-{
-    CollectionFilterBehavior* behavior = (CollectionFilterBehavior*)d;
-
-    FilterPredicate* oldPredicate = static_cast<const Noesis::Ptr<FilterPredicate>*>(e.oldValue)->GetPtr();
-    behavior->UnregisterPredicate(oldPredicate);
-
-    FilterPredicate* newPredicate = static_cast<const Noesis::Ptr<FilterPredicate>*>(e.newValue)->GetPtr();
-    behavior->RegisterPredicate(newPredicate);
-
-    behavior->FilterItems();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void CollectionFilterBehavior::OnItemsSourceChanged(Noesis::DependencyObject*  d,
-    const Noesis::DependencyPropertyChangedEventArgs& e)
-{
-    CollectionFilterBehavior* behavior = (CollectionFilterBehavior*)d;
-
-    FilterPredicate* predicate = behavior->GetPredicate();
-    if (predicate != nullptr)
-    {
-        Noesis::BaseComponent* source = static_cast<const Noesis::Ptr<Noesis::BaseComponent>*>(e.newValue)->GetPtr();
-        predicate->SetItemsSource(source);
-    }
-
-    behavior->FilterItems();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 NS_BEGIN_COLD_REGION
 
 NS_IMPLEMENT_REFLECTION(CollectionFilterBehavior, "NoesisGUIExtensions.CollectionFilterBehavior")
@@ -164,16 +132,42 @@ NS_IMPLEMENT_REFLECTION(CollectionFilterBehavior, "NoesisGUIExtensions.Collectio
     Noesis::DependencyData* data = NsMeta<Noesis::DependencyData>(Noesis::TypeOf<SelfClass>());
     data->RegisterProperty<Noesis::Ptr<FilterPredicate>>(PredicateProperty, "Predicate",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<FilterPredicate>(),
-            Noesis::PropertyChangedCallback(OnPredicateChanged)));
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs& e)
+    {
+        CollectionFilterBehavior* behavior = (CollectionFilterBehavior*)d;
+
+        FilterPredicate* oldPredicate = e.OldValue<Noesis::Ptr<FilterPredicate>>();
+        behavior->UnregisterPredicate(oldPredicate);
+
+        FilterPredicate* newPredicate = e.NewValue<Noesis::Ptr<FilterPredicate>>();
+        behavior->RegisterPredicate(newPredicate);
+
+        behavior->FilterItems();
+    })));
     data->RegisterProperty<Noesis::Ptr<Noesis::BaseComponent>>(ItemsSourceProperty, "ItemsSource",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<Noesis::BaseComponent>(),
-            Noesis::PropertyChangedCallback(OnItemsSourceChanged)));
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs& e)
+    {
+        CollectionFilterBehavior* behavior = (CollectionFilterBehavior*)d;
+
+        FilterPredicate* predicate = behavior->GetPredicate();
+        if (predicate != nullptr)
+        {
+            Noesis::BaseComponent* source = e.NewValue<Noesis::Ptr<Noesis::BaseComponent>>();
+            predicate->SetItemsSource(source);
+        }
+
+        behavior->FilterItems();
+    })));
     data->RegisterProperty<Noesis::Ptr<FilteredCollection>>(FilteredItemsProperty, "FilteredItems",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<FilteredCollection>()));
 }
+
+NS_END_COLD_REGION
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* CollectionFilterBehavior::PredicateProperty;
 const Noesis::DependencyProperty* CollectionFilterBehavior::ItemsSourceProperty;
 const Noesis::DependencyProperty* CollectionFilterBehavior::FilteredItemsProperty;
-

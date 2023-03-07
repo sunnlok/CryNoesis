@@ -32,22 +32,21 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors">
 ///      <TextBlock Text="{Binding Count}" Background="{StaticResource ValidBackground}">
-///        <i:Interaction.Triggers>
-///          <ei:PropertyChangedTrigger Binding="{Binding Path=Count}">
-///            <i:Interaction.Behaviors>
-///              <ei:ConditionBehavior>
-///                <ei:ConditionalExpression ForwardChaining="Or">
-///                  <ei:ComparisonCondition LeftOperand="{Binding Count}" Operator="LessThan" RightOperand="0" />
-///                  <ei:ComparisonCondition LeftOperand="{Binding Count}" Operator="GreaterThan" RightOperand="100" />
-///                </ei:ConditionalExpression>
-///              </ei:ConditionBehavior>
-///            </i:Interaction.Behaviors>
-///            <ei:ChangePropertyAction PropertyName="Background" Value="{StaticResource InvalidBackground}"/>
-///          </ei:PropertyChangedTrigger>
-///        </i:Interaction.Triggers>
+///        <b:Interaction.Triggers>
+///          <b:PropertyChangedTrigger Binding="{Binding Path=Count}">
+///            <b:Interaction.Behaviors>
+///              <b:ConditionBehavior>
+///                <b:ConditionalExpression ForwardChaining="Or">
+///                  <b:ComparisonCondition LeftOperand="{Binding Count}" Operator="LessThan" RightOperand="0" />
+///                  <b:ComparisonCondition LeftOperand="{Binding Count}" Operator="GreaterThan" RightOperand="100" />
+///                </b:ConditionalExpression>
+///              </b:ConditionBehavior>
+///            </b:Interaction.Behaviors>
+///            <b:ChangePropertyAction PropertyName="Background" Value="{StaticResource InvalidBackground}"/>
+///          </b:PropertyChangedTrigger>
+///        </b:Interaction.Triggers>
 ///      </TextBlock>
 ///    </Grid>
 ////////////////////////////////////////////////////////////////////////////////////////////////////

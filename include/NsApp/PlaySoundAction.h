@@ -11,7 +11,9 @@
 #include <NsCore/Noesis.h>
 #include <NsApp/InteractivityApi.h>
 #include <NsApp/TriggerAction.h>
-#include <NsGui/Uri.h>
+
+
+namespace Noesis { struct Uri; }
 
 
 namespace NoesisApp
@@ -28,14 +30,13 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors">
 ///      <Button Content="Close">
-///        <i:Interaction.Triggers>
-///          <i:EventTrigger EventName="Click">
-///            <ei:PlaySoundAction Source="Sounds/ExitButton.wav"/>
-///          </i:EventTrigger>
-///        </i:Interaction.Triggers>
+///        <b:Interaction.Triggers>
+///          <b:EventTrigger EventName="Click">
+///            <b:PlaySoundAction Source="Sounds/ExitButton.wav"/>
+///          </b:EventTrigger>
+///        </b:Interaction.Triggers>
 ///      </Button>
 ///    </Grid>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +47,7 @@ public:
     PlaySoundAction();
     ~PlaySoundAction();
 
-    /// Gets or sets the URI that defines the location of the sound file
+    /// Gets or sets the Uri that defines the location of the sound file
     //@{
     const Noesis::Uri& GetSource() const;
     void SetSource(const Noesis::Uri& source);

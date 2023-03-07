@@ -37,13 +37,12 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors">
 ///      <Border Background="Silver" Margin="100">
 ///        <Rectangle Width="100" Height="50" Fill="Red">
-///          <i:Interaction.Behaviors>
-///            <ei:MouseDragElementBehavior ConstraintToParentBounds="True" />
-///          </i:Interaction.Behaviors>
+///          <b:Interaction.Behaviors>
+///            <b:MouseDragElementBehavior ConstrainToParentBounds="True" />
+///          </b:Interaction.Behaviors>
 ///        </Rectangle>
 ///      </Border>
 ///    </Grid>
@@ -114,13 +113,6 @@ private:
     void UpdateTransform(float x, float y);
     void UpdatePosition(float x, float y);
     void UpdatePosition();
-
-    static void OnXChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-    static void OnYChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-    static void OnConstrainToParentBoundsChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
 
 private:
     bool mSettingPosition;

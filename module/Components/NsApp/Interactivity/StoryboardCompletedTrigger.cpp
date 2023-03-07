@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -49,7 +48,8 @@ void StoryboardCompletedTrigger::CloneCommonCore(const Freezable* source)
 
     StoryboardCompletedTrigger* trigger = (StoryboardCompletedTrigger*)source;
     Noesis::Storyboard* storyboard = trigger->GetStoryboard();
-    if (Noesis::DynamicCast<Noesis::ResourceDictionary*>(storyboard->GetNodeParent()) != 0)
+    if (storyboard != 0 &&
+        Noesis::DynamicCast<Noesis::ResourceDictionary*>(storyboard->GetNodeParent()) != 0)
     {
         // use original Storyboard resource, not a clone
         SetStoryboard(storyboard);
@@ -70,8 +70,8 @@ void StoryboardCompletedTrigger::OnDetaching()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void StoryboardCompletedTrigger::OnStoryboardChanged(const Noesis::DependencyPropertyChangedEventArgs& e)
 {
-    Noesis::Storyboard* oldStoryboard = static_cast<const Noesis::Ptr<Noesis::Storyboard>*>(e.oldValue)->GetPtr();
-    Noesis::Storyboard* newStoryboard = static_cast<const Noesis::Ptr<Noesis::Storyboard>*>(e.newValue)->GetPtr();
+    Noesis::Storyboard* oldStoryboard = e.OldValue<Noesis::Ptr<Noesis::Storyboard>>();
+    Noesis::Storyboard* newStoryboard = e.NewValue<Noesis::Ptr<Noesis::Storyboard>>();
 
     if (oldStoryboard != 0)
     {
@@ -96,3 +96,4 @@ NS_BEGIN_COLD_REGION
 
 NS_IMPLEMENT_REFLECTION_(StoryboardCompletedTrigger, "NoesisApp.StoryboardCompletedTrigger")
 
+NS_END_COLD_REGION

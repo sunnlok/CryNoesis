@@ -5,10 +5,10 @@
 #include "Renderer/Texture.h"
 
 
-Noesis::TextureInfo Cry::Ns::CTextureProvider::GetTextureInfo(const char* uri)
+Noesis::TextureInfo Cry::Ns::CTextureProvider::GetTextureInfo(const Noesis::Uri& uri)
 {
 	_smart_ptr<ITexture> pTexture;
-	pTexture.Assign_NoAddRef(gEnv->pRenderer->EF_LoadTexture(uri));
+	pTexture.Assign_NoAddRef(gEnv->pRenderer->EF_LoadTexture(uri.ToString().Str()));
 
 	if (!pTexture)
 		return { 0, 0 };
@@ -16,10 +16,10 @@ Noesis::TextureInfo Cry::Ns::CTextureProvider::GetTextureInfo(const char* uri)
 	return { (uint32)pTexture->GetWidth(), (uint32)pTexture->GetHeight() };
 }
 
-Noesis::Ptr<Noesis::Texture> Cry::Ns::CTextureProvider::LoadTexture(const char* uri, Noesis::RenderDevice* device)
+Noesis::Ptr<Noesis::Texture> Cry::Ns::CTextureProvider::LoadTexture(const Noesis::Uri& uri, Noesis::RenderDevice* device)
 {
 
-	auto pTextureRaw = gEnv->pRenderer->EF_LoadTexture(uri);
+	auto pTextureRaw = gEnv->pRenderer->EF_LoadTexture(uri.ToString().Str());
 	if (!pTextureRaw)
 		return nullptr;
 

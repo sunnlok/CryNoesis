@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -21,17 +20,23 @@ template<class T>
 struct ComparisonLogicImpl final: public ComparisonLogic
 {
     bool Evaluate(BaseComponent* left, ComparisonConditionType comparison,
-        BaseComponent* right) const final
+        BaseComponent* right) const override
     {
-        if (!ValidValue(left))
+        if (!Noesis::Boxing::CanUnbox<T>(left))
         {
             return false;
         }
-        if (!ValidValue(right))
+        if (!Noesis::Boxing::CanUnbox<T>(right))
         {
             return false;
         }
 
+        return EvaluateImpl(left, comparison, right);
+    }
+
+    static bool EvaluateImpl(BaseComponent* left, ComparisonConditionType comparison,
+        BaseComponent* right)
+    {
         switch (comparison)
         {
             case ComparisonConditionType_Equal:
@@ -50,24 +55,31 @@ struct ComparisonLogicImpl final: public ComparisonLogic
                 NS_ASSERT_UNREACHABLE;
         }
     }
+};
 
-    bool ValidValue(BaseComponent* value) const
+struct ComparisonLogicEnum final: public ComparisonLogic
+{
+    Noesis::TypeConverter* converter;
+
+    ComparisonLogicEnum(const Noesis::Type* type): converter(Noesis::TypeConverter::Get(type))
     {
-        if (Noesis::Boxing::CanUnbox<T>(value))
+    }
+
+    bool Evaluate(BaseComponent* left, ComparisonConditionType comparison,
+        BaseComponent* right) const override
+    {
+        Noesis::Ptr<Noesis::BaseComponent> l;
+        if (!converter->TryConvertTo(left, Noesis::TypeOf<int64_t>(), l))
         {
-            return true;
+            return false;
+        }
+        Noesis::Ptr<Noesis::BaseComponent> r;
+        if (!converter->TryConvertTo(right, Noesis::TypeOf<int64_t>(), r))
+        {
+            return false;
         }
 
-        if (Noesis::TypeOf<T>() == Noesis::TypeOf<int32_t>())
-        {
-            Noesis::BoxedValue* boxed = Noesis::DynamicCast<Noesis::BoxedValue*>(value);
-            if (boxed != 0 && Noesis::DynamicCast<const Noesis::TypeEnum*>(boxed->GetValueType()) != 0)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return ComparisonLogicImpl<int64_t>::EvaluateImpl(l, comparison, r);
     }
 };
 }
@@ -84,11 +96,7 @@ const Noesis::Type* ComparisonLogic::ExtractBoxedType(BaseComponent* value)
         Noesis::BoxedValue* boxedValue = Noesis::DynamicCast<Noesis::BoxedValue*>(value);
         if (boxedValue != 0)
         {
-            const Noesis::Type* boxedType = boxedValue->GetValueType();
-            if (Noesis::TypeConverter::HasConverter(boxedType))
-            {
-                return boxedType;
-            }
+            return boxedValue->GetValueType();
         }
     }
 
@@ -149,13 +157,15 @@ Noesis::Ptr<ComparisonLogic> ComparisonLogic::Create(const Noesis::Type* type)
     }
     else if (Noesis::DynamicCast<const Noesis::TypeEnum*>(type) != 0)
     {
-        return *new ComparisonLogicImpl<int32_t>();
+        return *new ComparisonLogicEnum(type);
     }
 
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 NS_BEGIN_COLD_REGION
 
 NS_IMPLEMENT_REFLECTION_(ComparisonLogic)
 
+NS_END_COLD_REGION

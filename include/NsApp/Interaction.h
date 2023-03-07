@@ -37,16 +37,15 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <UserControl
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
-///      <i:Interaction.Behaviors>
-///        <ei:MouseDragElementBehavior />
-///      <i:Interaction.Behaviors>
-///      <i:Interaction.Triggers>
-///        <i:EventTrigger EventName="Loaded">
-///          <ei:GoToStateAction StateName="Init" />
-///        </i:EventTrigger>
-///      <i:Interaction.Triggers>
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors">
+///      <b:Interaction.Behaviors>
+///        <b:MouseDragElementBehavior />
+///      <b:Interaction.Behaviors>
+///      <b:Interaction.Triggers>
+///        <b:EventTrigger EventName="Loaded">
+///          <b:GoToStateAction StateName="Init" />
+///        </b:EventTrigger>
+///      <b:Interaction.Triggers>
 ///    </UserControl>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 struct NS_APP_INTERACTIVITY_API Interaction
@@ -56,17 +55,6 @@ struct NS_APP_INTERACTIVITY_API Interaction
 
     /// Gets the value of the Triggers attached property
     static TriggerCollection* GetTriggers(const Noesis::DependencyObject* obj);
-
-private:
-    static void OnBehaviorsChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-    static void OnTriggersChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-
-    static bool CoerceBehaviors(const Noesis::DependencyObject* d, const void* value,
-        void* coercedValue);
-    static bool CoerceTriggers(const Noesis::DependencyObject* d, const void* value,
-        void* coercedValue);
 
 private:
     static const Noesis::DependencyProperty* BehaviorsProperty; // Attached

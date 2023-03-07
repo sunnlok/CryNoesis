@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -63,6 +62,8 @@ void AttachableObject::Attach(DependencyObject* associatedObject)
             &AttachableObject::OnAttachedDestroyed);
 
         mView = FindView();
+
+        InitComponent(this, true);
 
         OnAttached();
     }
@@ -135,3 +136,4 @@ NS_IMPLEMENT_REFLECTION(AttachableObject)
     NsImpl<IAttachedObject>();
 }
 
+NS_END_COLD_REGION

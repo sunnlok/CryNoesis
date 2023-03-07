@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -74,19 +73,30 @@ Noesis::Ptr<Noesis::Freezable> NoesisApp::DataTrigger::CreateInstanceCore() cons
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+void NoesisApp::DataTrigger::OnAttached()
+{
+    ParentClass::OnAttached();
+
+    EvaluateBindingChange();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 void NoesisApp::DataTrigger::EvaluateBindingChange()
 {
-    EnsureBindingValues();
-
-    bool sourceChanged = UpdateSourceType();
-    bool valueChanged = UpdateTriggerValue();
-    bool comparisonChanged = UpdateComparison();
-
-    if (sourceChanged || valueChanged || comparisonChanged)
+    if (GetAssociatedObject() != 0)
     {
-        if (Compare())
+        EnsureBindingValues();
+
+        bool sourceChanged = UpdateSourceType();
+        bool valueChanged = UpdateTriggerValue();
+        bool comparisonChanged = UpdateComparison();
+
+        if (sourceChanged || valueChanged || comparisonChanged)
         {
-            InvokeActions(0);
+            if (Compare())
+            {
+                InvokeActions(0);
+            }
         }
     }
 }
@@ -113,11 +123,7 @@ bool NoesisApp::DataTrigger::UpdateSourceType()
 
         if (mSourceType != 0)
         {
-            if (Noesis::TypeConverter::HasConverter(mSourceType))
-            {
-                mConverter = Noesis::TypeConverter::Create(mSourceType);
-            }
-
+            mConverter.Reset(Noesis::TypeConverter::Get(mSourceType));
             mComparator = ComparisonLogic::Create(mSourceType);
         }
     }
@@ -196,33 +202,24 @@ bool NoesisApp::DataTrigger::Compare()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void NoesisApp::DataTrigger::OnValueChanged(DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs&)
-{
-    DataTrigger* trigger = (DataTrigger*)d;
-    trigger->EvaluateTriggerChange();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void NoesisApp::DataTrigger::OnComparisonChanged(DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs&)
-{
-    DataTrigger* trigger = (DataTrigger*)d;
-    trigger->EvaluateTriggerChange();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 NS_BEGIN_COLD_REGION
 
 NS_IMPLEMENT_REFLECTION(NoesisApp::DataTrigger, "NoesisApp.DataTrigger")
 {
+    auto OnTriggerChanged = [](DependencyObject* d,
+        const Noesis::DependencyPropertyChangedEventArgs&)
+    {
+        DataTrigger* trigger = (DataTrigger*)d;
+        trigger->EvaluateBindingChange();
+    };
+
     Noesis::DependencyData* data = NsMeta<Noesis::DependencyData>(Noesis::TypeOf<SelfClass>());
     data->RegisterProperty<Noesis::Ptr<BaseComponent>>(ValueProperty, "Value",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<BaseComponent>(),
-            Noesis::PropertyChangedCallback(OnValueChanged)));
+            Noesis::PropertyChangedCallback(OnTriggerChanged)));
     data->RegisterProperty<ComparisonConditionType>(ComparisonProperty, "Comparison",
         Noesis::PropertyMetadata::Create(ComparisonConditionType_Equal,
-            Noesis::PropertyChangedCallback(OnComparisonChanged)));
+            Noesis::PropertyChangedCallback(OnTriggerChanged)));
 }
 
 NS_IMPLEMENT_REFLECTION_ENUM(ComparisonConditionType, "NoesisApp.ComparisonConditionType")
@@ -238,3 +235,4 @@ NS_IMPLEMENT_REFLECTION_ENUM(ComparisonConditionType, "NoesisApp.ComparisonCondi
 const Noesis::DependencyProperty* NoesisApp::DataTrigger::ValueProperty;
 const Noesis::DependencyProperty* NoesisApp::DataTrigger::ComparisonProperty;
 
+NS_END_COLD_REGION

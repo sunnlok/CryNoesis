@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -180,7 +179,8 @@ NS_IMPLEMENT_REFLECTION(GoToStateAction, "NoesisApp.GoToStateAction")
         Noesis::PropertyMetadata::Create(true));
 }
 
+NS_END_COLD_REGION
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* GoToStateAction::StateNameProperty;
 const Noesis::DependencyProperty* GoToStateAction::UseTransitionsProperty;
-

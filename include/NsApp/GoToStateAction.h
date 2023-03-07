@@ -29,13 +29,12 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <UserControl
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
-///      <i:Interaction.Triggers>
-///        <ei:PropertyChangedTrigger Binding="{Binding State}">
-///          <ei:GoToStateAction StateName="{Binding State}" />
-///        </ei:PropertyChangedTrigger>
-///      </i:Interaction.Triggers>
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors">
+///      <b:Interaction.Triggers>
+///        <b:PropertyChangedTrigger Binding="{Binding State}">
+///          <b:GoToStateAction StateName="{Binding State}" />
+///        </b:PropertyChangedTrigger>
+///      </b:Interaction.Triggers>
 ///      ...
 ///    </UserControl>
 ////////////////////////////////////////////////////////////////////////////////////////////////////

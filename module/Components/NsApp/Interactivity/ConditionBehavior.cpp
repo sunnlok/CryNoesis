@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -83,3 +82,4 @@ NS_IMPLEMENT_REFLECTION(ConditionBehavior, "NoesisApp.ConditionBehavior")
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* ConditionBehavior::ConditionProperty;
 
+NS_END_COLD_REGION

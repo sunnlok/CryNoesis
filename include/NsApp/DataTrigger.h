@@ -47,14 +47,13 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors">
 ///      <TextBlock Text="{Binding Name}">
-///        <i:Interaction.Triggers>
+///        <b:Interaction.Triggers>
 ///          <ie:DataTrigger Binding="{Binding Quantity}" Comparison="GreaterThan" Value="25">
 ///            <ie:ChangePropertyAction PropertyName="FontSize" Value="21" />
 ///          </ie:DataTrigger>
-///        </i:Interaction.Triggers>
+///        </b:Interaction.Triggers>
 ///      </TextBlock>
 ///    </Grid>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,12 +86,17 @@ public:
     static const Noesis::DependencyProperty* ComparisonProperty;
 
 protected:
-    /// From Freezable
+    // From Freezable
     //@{
     Noesis::Ptr<Noesis::Freezable> CreateInstanceCore() const override;
     //@}
 
-    /// From PropertyChangedTrigger
+    // From AttachableObject
+    //@{
+    void OnAttached() override;
+    //@}
+
+    // From PropertyChangedTrigger
     //@{
     void EvaluateBindingChange() override;
     //@}
@@ -103,11 +107,6 @@ private:
     bool UpdateTriggerValue();
     bool UpdateComparison();
     bool Compare();
-
-    static void OnValueChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-    static void OnComparisonChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
 
 private:
     const Noesis::Type* mSourceType;

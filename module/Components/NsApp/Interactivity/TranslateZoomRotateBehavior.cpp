@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -394,6 +393,8 @@ NS_IMPLEMENT_REFLECTION(TranslateZoomRotateBehavior, "NoesisApp.TranslateZoomRot
         Noesis::PropertyMetadata::Create(1.0f));
 }
 
+NS_END_COLD_REGION
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* TranslateZoomRotateBehavior::SupportedGesturesProperty;
 const Noesis::DependencyProperty* TranslateZoomRotateBehavior::TranslateFrictionProperty;
@@ -402,4 +403,3 @@ const Noesis::DependencyProperty* TranslateZoomRotateBehavior::ConstrainToParent
 const Noesis::DependencyProperty* TranslateZoomRotateBehavior::MinimumScaleProperty;
 const Noesis::DependencyProperty* TranslateZoomRotateBehavior::MaximumScaleProperty;
 const Noesis::DependencyProperty* TranslateZoomRotateBehavior::WheelSensitivityProperty;
-

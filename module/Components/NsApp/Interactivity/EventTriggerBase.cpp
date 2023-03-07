@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -8,6 +7,8 @@
 #include <NsApp/EventTriggerBase.h>
 #include <NsGui/UIElementData.h>
 #include <NsGui/FrameworkElement.h>
+#include <NsGui/Binding.h>
+#include <NsGui/BindingOperations.h>
 #include <NsCore/ReflectionImplement.h>
 #include <NsCore/String.h>
 
@@ -109,6 +110,12 @@ void EventTriggerBase::OnDetaching()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+Noesis::BaseComponent* EventTriggerBase::GetSourceNameResolver() const
+{
+    return GetValue<Noesis::Ptr<BaseComponent>>(SourceNameResolverProperty);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 void EventTriggerBase::UpdateSource(DependencyObject* associatedObject)
 {
     BaseComponent* oldSource = mSource;
@@ -117,19 +124,19 @@ void EventTriggerBase::UpdateSource(DependencyObject* associatedObject)
     if (associatedObject != 0)
     {
         BaseComponent* sourceObject = GetSourceObject();
-        const char* sourceName = GetSourceName();
-
         if (sourceObject != 0)
         {
             newSource = sourceObject;
         }
-        else if (!Noesis::StrIsNullOrEmpty(sourceName))
+        else if (!Noesis::StrIsNullOrEmpty(GetSourceName()))
         {
-            Noesis::FrameworkElement* element = Noesis::DynamicCast<Noesis::FrameworkElement*>(associatedObject);
-            BaseComponent* found = element != 0 ? element->FindName(sourceName) : 0;
-            if (found != 0)
+            newSource = GetSourceNameResolver();
+
+            if (newSource != nullptr)
             {
-                newSource = found;
+                // Remove binding once we have found the SourceName object because keeping it
+                // stored in this property could create circular references and memory leaks
+                Noesis::BindingOperations::ClearBinding(this, SourceNameResolverProperty);
             }
         }
     }
@@ -151,6 +158,53 @@ void EventTriggerBase::UpdateSource(DependencyObject* associatedObject)
                 newSource->GetClassType()->GetName());
         }
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+static const Noesis::RoutedEvent* FindRoutedEvent(Noesis::Symbol eventName,
+    const Noesis::TypeClass* type)
+{
+    const Noesis::TypeClass* elementType = Noesis::TypeOf<Noesis::UIElement>();
+    while (type != 0)
+    {
+        const Noesis::UIElementData* metadata = Noesis::FindMeta<Noesis::UIElementData>(type);
+
+        if (metadata != 0)
+        {
+            const Noesis::RoutedEvent* event = metadata->FindEvent(eventName);
+            if (event != 0)
+            {
+                return event;
+            }
+        }
+
+        if (type == elementType)
+        {
+            break;
+        }
+
+        type = type->GetBase();
+    }
+
+    return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+const Noesis::TypeProperty* FindEvent(Noesis::Symbol eventName,
+    const Noesis::TypeClass* type)
+{
+    while (type != 0)
+    {
+        const Noesis::TypeProperty* event = type->FindEvent(eventName);
+        if (event != 0)
+        {
+            return event;
+        }
+
+        type = type->GetBase();
+    }
+
+    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -200,8 +254,9 @@ void EventTriggerBase::RegisterEvent(BaseComponent* source, const char* eventNam
                 source->AddReference();
             }
 
-            mUnregisterEvent = [this, source, &handler]()
+            mUnregisterEvent = [this, source, event]()
             {
+                Noesis::EventHandler& handler = *(Noesis::EventHandler*)event->GetContent(source);
                 handler -= MakeDelegate(this, &EventTriggerBase::OnDelegateEvent);
 
                 DependencyObject* d = Noesis::DynamicCast<DependencyObject*>(source);
@@ -232,78 +287,15 @@ void EventTriggerBase::OnSourceDestroyed(DependencyObject*)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-const Noesis::RoutedEvent* EventTriggerBase::FindRoutedEvent(Noesis::Symbol eventName,
-    const Noesis::TypeClass* type)
-{
-    const Noesis::TypeClass* elementType = Noesis::TypeOf<Noesis::UIElement>();
-    while (type != 0)
-    {
-        const Noesis::UIElementData* metadata = type->GetMetaData().Find<Noesis::UIElementData>();
-
-        if (metadata != 0)
-        {
-            const Noesis::RoutedEvent* event = metadata->FindEvent(eventName);
-            if (event != 0)
-            {
-                return event;
-            }
-        }
-
-        if (type == elementType)
-        {
-            break;
-        }
-
-        type = type->GetBase();
-    }
-
-    return 0;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 void EventTriggerBase::OnRoutedEvent(BaseComponent*, const Noesis::RoutedEventArgs&)
 {
     OnEvent();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-const Noesis::TypeProperty* EventTriggerBase::FindEvent(Noesis::Symbol eventName,
-    const Noesis::TypeClass* type)
-{
-    while (type != 0)
-    {
-        const Noesis::TypeProperty* event = type->FindEvent(eventName);
-        if (event != 0)
-        {
-            return event;
-        }
-
-        type = type->GetBase();
-    }
-
-    return 0;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 void EventTriggerBase::OnDelegateEvent(BaseComponent*, const Noesis::EventArgs&)
 {
     OnEvent();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void EventTriggerBase::OnSourceObjectChanged(DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs&)
-{
-    EventTriggerBase* trigger = static_cast<EventTriggerBase*>(d);
-    trigger->UpdateSource(trigger->GetAssociatedObject());
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void EventTriggerBase::OnSourceNameChanged(DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs&)
-{
-    EventTriggerBase* trigger = static_cast<EventTriggerBase*>(d);
-    trigger->UpdateSource(trigger->GetAssociatedObject());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -314,13 +306,39 @@ NS_IMPLEMENT_REFLECTION(EventTriggerBase, "NoesisApp.EventTriggerBase")
     Noesis::DependencyData* data = NsMeta<Noesis::DependencyData>(Noesis::TypeOf<SelfClass>());
     data->RegisterProperty<Noesis::Ptr<BaseComponent>>(SourceObjectProperty, "SourceObject",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<BaseComponent>(),
-            Noesis::PropertyChangedCallback(OnSourceObjectChanged)));
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs&)
+    {
+        EventTriggerBase* trigger = (EventTriggerBase*)d;
+        trigger->UpdateSource(trigger->GetAssociatedObject());
+    })));
     data->RegisterProperty<Noesis::String>(SourceNameProperty, "SourceName",
         Noesis::PropertyMetadata::Create(Noesis::String(),
-            Noesis::PropertyChangedCallback(OnSourceNameChanged)));
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs& e)
+    {
+        EventTriggerBase* trigger = (EventTriggerBase*)d;
+        const char* sourceName = e.NewValue<Noesis::String>().Str();
+        Noesis::Ptr<Noesis::Binding> binding = *new Noesis::Binding("", sourceName);
+        Noesis::BindingOperations::SetBinding(trigger, SourceNameResolverProperty, binding);
+    }
+    )));
+    data->RegisterProperty<Noesis::Ptr<BaseComponent>>(SourceNameResolverProperty,
+        ".SourceNameResolver", Noesis::PropertyMetadata::Create(Noesis::Ptr<BaseComponent>(),
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs&)
+    {
+        EventTriggerBase* trigger = (EventTriggerBase*)d;
+        if (Noesis::BindingOperations::GetBinding(trigger, SourceNameResolverProperty) != nullptr)
+        {
+            trigger->UpdateSource(trigger->GetAssociatedObject());
+        }
+    })));
 }
+
+NS_END_COLD_REGION
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* EventTriggerBase::SourceObjectProperty;
 const Noesis::DependencyProperty* EventTriggerBase::SourceNameProperty;
-
+const Noesis::DependencyProperty* EventTriggerBase::SourceNameResolverProperty;

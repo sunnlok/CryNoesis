@@ -64,20 +64,19 @@ protected:
     //@}
 
 private:
+    Noesis::BaseComponent* GetTargetNameResolver() const;
+
     void UpdateTarget(Noesis::DependencyObject* associatedObject);
 
     void RegisterTarget();
     void UnregisterTarget();
     void OnTargetDestroyed(DependencyObject* d);
 
-    static void OnTargetObjectChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-    static void OnTargetNameChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-
 private:
     const Noesis::TypeClass* mTargetType;
     Noesis::BaseComponent* mTarget;
+
+    static const Noesis::DependencyProperty* TargetNameResolverProperty;
 
     NS_DECLARE_REFLECTION(TargetedTriggerAction, TriggerAction)
 };

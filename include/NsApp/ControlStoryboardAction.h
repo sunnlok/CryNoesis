@@ -39,8 +39,7 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors">
 ///      <Grid.Resources>
 ///        <Storyboard x:Key="BlinkText">
 ///          <ColorAnimation To="White" Duration="0:0:0.1" AutoReverse="True"
@@ -49,11 +48,11 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///          </Storyboard>
 ///      </Grid.Resources>
 ///      <TextBlock x:Name="StatusText" Text="{Binding Status}" Foreground="Silver">
-///        <i:Interaction.Triggers>
-///          <ei:PropertyChangedTrigger Binding="{Binding Status}">
-///             <ei:ControlStoryboardAction Storyboard="{StaticResource BlinkText}"/>
-///          </ei:PropertyChangedTrigger>
-///        </i:Interaction.Triggers>
+///        <b:Interaction.Triggers>
+///          <b:PropertyChangedTrigger Binding="{Binding Status}">
+///             <b:ControlStoryboardAction Storyboard="{StaticResource BlinkText}"/>
+///          </b:PropertyChangedTrigger>
+///        </b:Interaction.Triggers>
 ///      </TextBlock>
 ///    </Grid>
 ////////////////////////////////////////////////////////////////////////////////////////////////////

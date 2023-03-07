@@ -50,6 +50,8 @@ void AttachableCollection<T>::Attach(Noesis::DependencyObject* associatedObject)
         mAssociatedObject->Destroyed() += MakeDelegate(this,
             &AttachableCollection::OnAttachedDestroyed);
 
+        InitComponent(this, true);
+
         OnAttached();
     }
 }

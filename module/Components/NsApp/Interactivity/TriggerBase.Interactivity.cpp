@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -126,6 +125,7 @@ NS_IMPLEMENT_REFLECTION(NoesisApp::TriggerBase, "NoesisApp.TriggerBase")
         Noesis::PropertyMetadata::Create(Noesis::Ptr<TriggerActionCollection>()));
 }
 
+NS_END_COLD_REGION
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* NoesisApp::TriggerBase::ActionsProperty;
-

@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -126,11 +125,7 @@ void ComparisonCondition::EnsureOperands() const
 
         if (mSourceType != 0)
         {
-            if (Noesis::TypeConverter::HasConverter(mSourceType))
-            {
-                mConverter = Noesis::TypeConverter::Create(mSourceType);
-            }
-
+            mConverter.Reset(Noesis::TypeConverter::Get(mSourceType));
             mComparator = ComparisonLogic::Create(mSourceType);
         }
     }
@@ -166,8 +161,9 @@ NS_IMPLEMENT_REFLECTION(ComparisonCondition, "NoesisApp.ComparisonCondition")
         Noesis::PropertyMetadata::Create(Noesis::Ptr<BaseComponent>()));
 }
 
+NS_END_COLD_REGION
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* ComparisonCondition::LeftOperandProperty;
 const Noesis::DependencyProperty* ComparisonCondition::OperatorProperty;
 const Noesis::DependencyProperty* ComparisonCondition::RightOperandProperty;
-

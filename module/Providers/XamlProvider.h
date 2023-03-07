@@ -12,7 +12,7 @@ namespace Ns
 		CXamlProvider();
 		~CXamlProvider();
 
-		virtual Noesis::Ptr<Noesis::Stream> LoadXaml(const char* uri) override;
+		virtual Noesis::Ptr<Noesis::Stream> LoadXaml(const Noesis::Uri& uri) override;
 
 		void ReloadAllXaml();
 		void ReloadSpecificXaml(const char* uri);

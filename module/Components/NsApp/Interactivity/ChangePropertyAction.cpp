@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -13,6 +12,7 @@
 #include <NsCore/TypeConverter.h>
 
 #include "ComparisonLogic.h"
+#include "DataBindingHelper.h"
 
 
 using namespace NoesisApp;
@@ -86,33 +86,36 @@ Noesis::Ptr<Noesis::Freezable> ChangePropertyAction::CreateInstanceCore() const
 void ChangePropertyAction::Invoke(BaseComponent*)
 {
     BaseComponent* target = GetTarget();
-    if (GetAssociatedObject() != 0 && target != 0 && (
-        mTypeProperty != 0 || mDependencyProperty != 0))
+    if (GetAssociatedObject() != 0 && target != 0)
     {
-        const Noesis::Duration& duration = GetDuration();
-        if (duration.GetDurationType() == Noesis::DurationType_TimeSpan)
+        if (mTypeProperty == 0 && mDependencyProperty == 0)
         {
-            NS_ERROR("ChangePropertyAction with Duration animation not implemented");
-            SetPropertyValue();
+            if (UpdateProperty())
+            {
+                UpdateConvertedValue();
+            }
         }
-        else if (GetIncrement())
-        {
-            NS_ERROR("ChangePropertyAction with Increment not implemented");
-            SetPropertyValue();
-        }
-        else
-        {
-            SetPropertyValue();
-        }
-    }
-}
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void ChangePropertyAction::OnTargetChanged(BaseComponent*, BaseComponent*)
-{
-    if (UpdateProperty())
-    {
-        UpdateConvertedValue();
+        if (mTypeProperty != 0 || mDependencyProperty != 0)
+        {
+            DataBindingHelper::EnsureBindingValue(this, ValueProperty);
+
+            const Noesis::Duration& duration = GetDuration();
+            if (duration.GetDurationType() == Noesis::DurationType_TimeSpan)
+            {
+                NS_ERROR("ChangePropertyAction with Duration animation not implemented");
+                SetPropertyValue(target);
+            }
+            else if (GetIncrement())
+            {
+                NS_ERROR("ChangePropertyAction with Increment not implemented");
+                SetPropertyValue(target);
+            }
+            else
+            {
+                SetPropertyValue(target);
+            }
+        }
     }
 }
 
@@ -192,9 +195,9 @@ bool ChangePropertyAction::UpdateProperty()
     {
         mConverter.Reset();
 
-        if (newType != 0 && Noesis::TypeConverter::HasConverter(newType))
+        if (newType != 0)
         {
-            mConverter = Noesis::TypeConverter::Create(newType);
+            mConverter.Reset(Noesis::TypeConverter::Get(newType));
         }
 
         return true;
@@ -222,10 +225,9 @@ void ChangePropertyAction::UpdateConvertedValue()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void ChangePropertyAction::SetPropertyValue()
+void ChangePropertyAction::SetPropertyValue(Noesis::BaseComponent* target)
 {
-    BaseComponent* target = GetTarget();
-
+    NS_ASSERT(target != 0);
     if (mTypeProperty != 0)
     {
         mTypeProperty->SetComponent(target, mConvertedValue);
@@ -238,62 +240,37 @@ void ChangePropertyAction::SetPropertyValue()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void ChangePropertyAction::OnPropertyNameChanged(Noesis::DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs&)
-{
-    ChangePropertyAction* trigger = (ChangePropertyAction*)d;
-
-    if (trigger->UpdateProperty())
-    {
-        trigger->UpdateConvertedValue();
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void ChangePropertyAction::OnValueChanged(Noesis::DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs&)
-{
-    ChangePropertyAction* trigger = (ChangePropertyAction*)d;
-
-    trigger->UpdateProperty();
-    trigger->UpdateConvertedValue();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void ChangePropertyAction::OnDurationChanged(Noesis::DependencyObject*,
-    const Noesis::DependencyPropertyChangedEventArgs&)
-{
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void ChangePropertyAction::OnIncrementChanged(Noesis::DependencyObject*,
-    const Noesis::DependencyPropertyChangedEventArgs&)
-{
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 NS_BEGIN_COLD_REGION
 
 NS_IMPLEMENT_REFLECTION(ChangePropertyAction, "NoesisApp.ChangePropertyAction")
 {
     Noesis::DependencyData* data = NsMeta<Noesis::DependencyData>(Noesis::TypeOf<SelfClass>());
     data->RegisterProperty<Noesis::String>(PropertyNameProperty, "PropertyName",
-        Noesis::PropertyMetadata::Create(Noesis::String(),
-            Noesis::PropertyChangedCallback(OnPropertyNameChanged)));
+        Noesis::PropertyMetadata::Create(Noesis::String(), Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs&)
+    {
+        ChangePropertyAction* trigger = (ChangePropertyAction*)d;
+        trigger->mTypeProperty = 0;
+        trigger->mDependencyProperty = 0;
+    })));
     data->RegisterProperty<Noesis::Ptr<BaseComponent>>(ValueProperty, "Value",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<BaseComponent>(),
-            Noesis::PropertyChangedCallback(OnValueChanged)));
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs&)
+    {
+        ChangePropertyAction* trigger = (ChangePropertyAction*)d;
+        trigger->UpdateConvertedValue();
+    })));
     data->RegisterProperty<Noesis::Duration>(DurationProperty, "Duration",
-        Noesis::PropertyMetadata::Create(Noesis::Duration(),
-            Noesis::PropertyChangedCallback(OnDurationChanged)));
+        Noesis::PropertyMetadata::Create(Noesis::Duration()));
     data->RegisterProperty<bool>(IncrementProperty, "Increment",
-        Noesis::PropertyMetadata::Create(false,
-            Noesis::PropertyChangedCallback(OnIncrementChanged)));
+        Noesis::PropertyMetadata::Create(false));
 }
+
+NS_END_COLD_REGION
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* ChangePropertyAction::PropertyNameProperty;
 const Noesis::DependencyProperty* ChangePropertyAction::ValueProperty;
 const Noesis::DependencyProperty* ChangePropertyAction::DurationProperty;
 const Noesis::DependencyProperty* ChangePropertyAction::IncrementProperty;
-

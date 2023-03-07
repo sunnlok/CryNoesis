@@ -27,14 +27,13 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors">
 ///      <Button Content="Visit Webpage">
-///        <i:Interaction.Triggers>
-///          <i:EventTrigger EventName="Click">
-///            <ei:LaunchUriOrFileAction Path="www.noesisengine.com" />
-///          </i:EventTrigger>
-///        </i:Interaction.Triggers>
+///        <b:Interaction.Triggers>
+///          <b:EventTrigger EventName="Click">
+///            <b:LaunchUriOrFileAction Path="www.noesisengine.com" />
+///          </b:EventTrigger>
+///        </b:Interaction.Triggers>
 ///      </Button>
 ///    </Grid>
 ////////////////////////////////////////////////////////////////////////////////////////////////////

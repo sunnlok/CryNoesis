@@ -28,15 +28,14 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions"
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
 ///      xmlns:noesis="clr-namespace:NoesisGUIExtensions;assembly=Noesis.GUI.Extensions">
 ///      <TextBox Text="{Binding UserName}">
-///        <i:Interaction.Triggers>
-///          <i:EventTrigger EventName="GotKeybaordFocus">
+///        <b:Interaction.Triggers>
+///          <b:EventTrigger EventName="GotKeybaordFocus">
 ///            <noesis:SelectAllAction />
-///          </i:EventTrigger>
-///        </i:Interaction.Triggers>
+///          </b:EventTrigger>
+///        </b:Interaction.Triggers>
 ///      </TextBox>
 ///    </Grid>
 ////////////////////////////////////////////////////////////////////////////////////////////////////

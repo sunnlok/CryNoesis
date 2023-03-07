@@ -26,14 +26,13 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors">
 ///      <Button Content="Close">
-///        <i:Interaction.Triggers>
-///          <i:TimerTrigger EventName="Click" MillisecondsPerTick="500" TotalTicks="1">
-///            <i:InvokeCommandAction Command="{Binding CloseCommand}"/>
-///          </i:TimerTrigger>
-///        </i:Interaction.Triggers>
+///        <b:Interaction.Triggers>
+///          <b:TimerTrigger EventName="Click" MillisecondsPerTick="500" TotalTicks="1">
+///            <b:InvokeCommandAction Command="{Binding CloseCommand}"/>
+///          </b:TimerTrigger>
+///        </b:Interaction.Triggers>
 ///      </Button>
 ///    </Grid>
 ////////////////////////////////////////////////////////////////////////////////////////////////////

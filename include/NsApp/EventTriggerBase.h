@@ -84,6 +84,8 @@ protected:
     //@}
 
 private:
+    Noesis::BaseComponent* GetSourceNameResolver() const;
+
     void UpdateSource(Noesis::DependencyObject* associatedObject);
 
     void RegisterEvent(Noesis::BaseComponent* source, const char* eventName);
@@ -91,17 +93,8 @@ private:
 
     void OnSourceDestroyed(DependencyObject* dob);
 
-    static const Noesis::RoutedEvent* FindRoutedEvent(Noesis::Symbol eventName,
-        const Noesis::TypeClass* type);
     void OnRoutedEvent(Noesis::BaseComponent* sender, const Noesis::RoutedEventArgs& e);
-    static const Noesis::TypeProperty* FindEvent(Noesis::Symbol eventName,
-        const Noesis::TypeClass* type);
     void OnDelegateEvent(Noesis::BaseComponent* sender, const Noesis::EventArgs& e);
-
-    static void OnSourceObjectChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-    static void OnSourceNameChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
 
 private:
     const Noesis::TypeClass* mSourceType;
@@ -109,6 +102,8 @@ private:
 
     typedef Noesis::Delegate<void()> UnregisterEventDelegate;
     UnregisterEventDelegate mUnregisterEvent;
+
+    static const Noesis::DependencyProperty* SourceNameResolverProperty;
 
     NS_DECLARE_REFLECTION(EventTriggerBase, TriggerBase)
 };

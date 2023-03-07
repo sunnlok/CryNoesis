@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -103,7 +102,7 @@ void KeyTrigger::OnAttached()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void KeyTrigger::OnDetaching()
 {
-    UnregisterSource();
+    UnregisterSource(GetFiredOn());
     ParentClass::OnDetaching();
 }
 
@@ -145,7 +144,7 @@ void KeyTrigger::RegisterSource()
 
     if (mSource != 0)
     {
-        if (GetFiredOn() == KeyTriggerFiredOn_KeyDown)
+        if (!IsInitialized() || GetFiredOn() == KeyTriggerFiredOn_KeyDown)
         {
             mSource->KeyDown() += MakeDelegate(this, &KeyTrigger::OnKeyPress);
         }
@@ -159,13 +158,13 @@ void KeyTrigger::RegisterSource()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void KeyTrigger::UnregisterSource()
+void KeyTrigger::UnregisterSource(KeyTriggerFiredOn firedOn)
 {
     if (mSource != 0)
     {
         mSource->Destroyed() -= MakeDelegate(this, &KeyTrigger::OnSourceDestroyed);
 
-        if (GetFiredOn() == KeyTriggerFiredOn_KeyDown)
+        if (firedOn == KeyTriggerFiredOn_KeyDown)
         {
             mSource->KeyDown() -= MakeDelegate(this, &KeyTrigger::OnKeyPress);
         }
@@ -181,7 +180,7 @@ void KeyTrigger::UnregisterSource()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void KeyTrigger::OnSourceDestroyed(DependencyObject*)
 {
-    UnregisterSource();
+    UnregisterSource(GetFiredOn());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -200,9 +199,23 @@ NS_IMPLEMENT_REFLECTION(KeyTrigger, "NoesisApp.KeyTrigger")
     data->RegisterProperty<Noesis::ModifierKeys>(ModifiersProperty, "Modifiers",
         Noesis::PropertyMetadata::Create(Noesis::ModifierKeys_None));
     data->RegisterProperty<bool>(ActiveOnFocusProperty, "ActiveOnFocus",
-        Noesis::PropertyMetadata::Create(false));
+        Noesis::PropertyMetadata::Create(false,
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs&)
+    {
+        KeyTrigger* trigger = (KeyTrigger*)d;
+        trigger->UnregisterSource(trigger->GetFiredOn());
+        trigger->RegisterSource();
+    })));
     data->RegisterProperty<KeyTriggerFiredOn>(FiredOnProperty, "FiredOn",
-        Noesis::PropertyMetadata::Create(KeyTriggerFiredOn_KeyDown));
+        Noesis::PropertyMetadata::Create(KeyTriggerFiredOn_KeyDown,
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs& e)
+    {
+        KeyTrigger* trigger = (KeyTrigger*)d;
+        trigger->UnregisterSource(e.OldValue<KeyTriggerFiredOn>());
+        trigger->RegisterSource();
+    })));
 }
 
 NS_IMPLEMENT_REFLECTION_ENUM(KeyTriggerFiredOn, "NoesisApp.KeyTriggerFiredOn")
@@ -211,8 +224,10 @@ NS_IMPLEMENT_REFLECTION_ENUM(KeyTriggerFiredOn, "NoesisApp.KeyTriggerFiredOn")
     NsVal("KeyUp", KeyTriggerFiredOn_KeyUp);
 }
 
+NS_END_COLD_REGION
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* KeyTrigger::KeyProperty;
 const Noesis::DependencyProperty* KeyTrigger::ModifiersProperty;
 const Noesis::DependencyProperty* KeyTrigger::ActiveOnFocusProperty;
 const Noesis::DependencyProperty* KeyTrigger::FiredOnProperty;
-

@@ -39,13 +39,13 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
 ///      xmlns:noesis="clr-namespace:NoesisGUIExtensions;assembly=Noesis.GUI.Extensions">
-///      <i:Interaction.Behaviors>
+///      <b:Interaction.Behaviors>
 ///        <noesis:CollectionFilterBehavior x:Name="FilterBehavior"
 ///          ItemsSource="{Binding Books}"
 ///          Predicate="{Binding TextPredicate}" />
-///      </i:Interaction.Behaviors>
+///      </b:Interaction.Behaviors>
 ///      <TextBox Text="{Binding SearchText}"/>
 ///      <ListBox ItemsSource="{Binding FilteredItems, ElementName=FilterBehavior}" />
 ///    </Grid>
@@ -91,11 +91,6 @@ private:
 
     void RegisterPredicate(FilterPredicate* predicate);
     void UnregisterPredicate(FilterPredicate* predicate);
-
-    static void OnItemsSourceChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-    static void OnPredicateChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
 
     NS_DECLARE_REFLECTION(CollectionFilterBehavior, BehaviorT<Noesis::FrameworkElement>)
 };

@@ -26,14 +26,13 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors">
 ///      <TextBlock Text="{Binding Name}">
-///        <i:Interaction.Triggers>
-///          <i:EventTrigger EventName="MouseEnter">
-///            <ei:ChangePropertyAction PropertyName="FontWeight" Value="Bold"/>
-///          </i:EventTrigger>
-///        </i:Interaction.Triggers>
+///        <b:Interaction.Triggers>
+///          <b:EventTrigger EventName="MouseEnter">
+///            <b:ChangePropertyAction PropertyName="FontWeight" Value="Bold"/>
+///          </b:EventTrigger>
+///        </b:Interaction.Triggers>
 ///      </TextBlock>
 ///    </Grid>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,10 +63,6 @@ protected:
     //@{
     Noesis::Ptr<Noesis::Freezable> CreateInstanceCore() const override;
     //@}
-
-private:
-    static void StaticOnEventNameChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
 
     NS_DECLARE_REFLECTION(EventTrigger, EventTriggerBaseT)
 };

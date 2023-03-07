@@ -26,14 +26,13 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors">
 ///      <Slider x:Name="Percentage" Minimum="0" Maximum="100">
-///        <i:Interaction.Triggers>
-///          <ei:PropertyChangedTrigger Binding="{Binding Value, ElementName=Percentage}">
-///            <ei:PlaySoundAction Source="Sounds/SliderDrag.wav"/>
-///          </ei:PropertyChangedTrigger>
-///        </i:Interaction.Triggers>
+///        <b:Interaction.Triggers>
+///          <b:PropertyChangedTrigger Binding="{Binding Value, ElementName=Percentage}">
+///            <b:PlaySoundAction Source="Sounds/SliderDrag.wav"/>
+///          </b:PropertyChangedTrigger>
+///        </b:Interaction.Triggers>
 ///      </Slider>
 ///    </Grid>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -59,8 +58,6 @@ public:
     static const Noesis::DependencyProperty* BindingProperty;
 
 protected:
-    void EvaluateTriggerChange();
-
     // Called when the binding property has changed
     virtual void EvaluateBindingChange();
 
@@ -69,26 +66,10 @@ protected:
     Noesis::Ptr<Noesis::Freezable> CreateInstanceCore() const override;
     //@}
 
-    // From DependencyObject
+    // From AttachableObject
     //@{
-    void OnPostInit() override;
+    void OnAttached() override;
     //@}
-
-private:
-    static void OnBindingChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-
-private:
-    union
-    {
-        struct
-        {
-            bool initCompleted : 1;
-            bool evaluateRequired : 1;
-        } mFlags;
-
-        uint8_t mAllFlags;
-    };
 
     NS_DECLARE_REFLECTION(PropertyChangedTrigger, TriggerBase)
 };

@@ -39,13 +39,13 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
 ///      xmlns:noesis="clr-namespace:NoesisGUIExtensions;assembly=Noesis.GUI.Extensions">
-///      <i:Interaction.Behaviors>
+///      <b:Interaction.Behaviors>
 ///        <noesis:CollectionSortBehavior x:Name="SortBehavior"
 ///          ItemsSource="{Binding Books}"
 ///          Comparer="{Binding BookComparer}" />
-///      </i:Interaction.Behaviors>
+///      </b:Interaction.Behaviors>
 ///      <ListBox ItemsSource="{Binding SortedItems, ElementName=SortBehavior}" />
 ///    </Grid>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,11 +99,6 @@ private:
 
     void RegisterComparer(SortComparer* comparer);
     void UnregisterComparer(SortComparer* comparer);
-
-    static void OnItemsSourceChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-    static void OnComparerChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
 
     NS_DECLARE_REFLECTION(CollectionSortBehavior, BehaviorT<Noesis::FrameworkElement>)
 };

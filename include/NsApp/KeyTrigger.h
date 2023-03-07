@@ -35,13 +35,12 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <UserControl
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
-///      <i:Interaction.Triggers>
-///        <ei:KeyTrigger FiredOn="KeyDown" Key="Escape">
-///          <i:InvokeCommandAction Command="{Binding ExitCommand}" />
-///        </ei:KeyTrigger>
-///      <i:Interaction.Triggers>
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors">
+///      <b:Interaction.Triggers>
+///        <b:KeyTrigger FiredOn="KeyDown" Key="Escape">
+///          <b:InvokeCommandAction Command="{Binding ExitCommand}" />
+///        </b:KeyTrigger>
+///      <b:Interaction.Triggers>
 ///      ...
 ///    </UserControl>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -107,7 +106,7 @@ private:
     void OnKeyPress(Noesis::BaseComponent* sender, const Noesis::KeyEventArgs& e);
 
     void RegisterSource();
-    void UnregisterSource();
+    void UnregisterSource(KeyTriggerFiredOn firedOn);
 
     void OnSourceDestroyed(DependencyObject* obj);
 

@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -92,7 +91,7 @@ void GamepadTrigger::OnAttached()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void GamepadTrigger::OnDetaching()
 {
-    UnregisterSource();
+    UnregisterSource(GetFiredOn());
     ParentClass::OnDetaching();
 }
 
@@ -126,7 +125,7 @@ void GamepadTrigger::RegisterSource()
 
     if (mSource != 0)
     {
-        if (GetFiredOn() == GamepadTriggerFiredOn_ButtonDown)
+        if (!IsInitialized() || GetFiredOn() == GamepadTriggerFiredOn_ButtonDown)
         {
             mSource->KeyDown() += MakeDelegate(this, &GamepadTrigger::OnButtonPress);
         }
@@ -140,13 +139,13 @@ void GamepadTrigger::RegisterSource()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void GamepadTrigger::UnregisterSource()
+void GamepadTrigger::UnregisterSource(GamepadTriggerFiredOn firedOn)
 {
     if (mSource != 0)
     {
         mSource->Destroyed() -= MakeDelegate(this, &GamepadTrigger::OnSourceDestroyed);
 
-        if (GetFiredOn() == GamepadTriggerFiredOn_ButtonDown)
+        if (firedOn == GamepadTriggerFiredOn_ButtonDown)
         {
             mSource->KeyDown() -= MakeDelegate(this, &GamepadTrigger::OnButtonPress);
         }
@@ -162,7 +161,7 @@ void GamepadTrigger::UnregisterSource()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void GamepadTrigger::OnSourceDestroyed(DependencyObject*)
 {
-    UnregisterSource();
+    UnregisterSource(GetFiredOn());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -174,9 +173,23 @@ NS_IMPLEMENT_REFLECTION(GamepadTrigger, "NoesisGUIExtensions.GamepadTrigger")
     data->RegisterProperty<GamepadButton>(ButtonProperty, "Button",
         Noesis::PropertyMetadata::Create(GamepadButton_Accept));
     data->RegisterProperty<bool>(ActiveOnFocusProperty, "ActiveOnFocus",
-        Noesis::PropertyMetadata::Create(false));
+        Noesis::PropertyMetadata::Create(false,
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs&)
+    {
+        GamepadTrigger* trigger = (GamepadTrigger*)d;
+        trigger->UnregisterSource(trigger->GetFiredOn());
+        trigger->RegisterSource();
+    })));
     data->RegisterProperty<GamepadTriggerFiredOn>(FiredOnProperty, "FiredOn",
-        Noesis::PropertyMetadata::Create(GamepadTriggerFiredOn_ButtonDown));
+        Noesis::PropertyMetadata::Create(GamepadTriggerFiredOn_ButtonDown,
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs& e)
+    {
+        GamepadTrigger* trigger = (GamepadTrigger*)d;
+        trigger->UnregisterSource(e.OldValue<GamepadTriggerFiredOn>());
+        trigger->RegisterSource();
+    })));
 }
 
 NS_IMPLEMENT_REFLECTION_ENUM(GamepadTriggerFiredOn, "NoesisGUIExtensions.GamepadTriggerFiredOn")
@@ -205,7 +218,9 @@ NS_IMPLEMENT_REFLECTION_ENUM(GamepadButton, "NoesisGUIExtensions.GamepadButton")
     NsVal("Context4", GamepadButton_Context4);
 }
 
+NS_END_COLD_REGION
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* GamepadTrigger::ButtonProperty;
 const Noesis::DependencyProperty* GamepadTrigger::ActiveOnFocusProperty;
 const Noesis::DependencyProperty* GamepadTrigger::FiredOnProperty;
-

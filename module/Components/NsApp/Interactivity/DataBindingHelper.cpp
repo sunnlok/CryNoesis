@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -25,4 +24,3 @@ void DataBindingHelper::EnsureBindingValue(const Noesis::DependencyObject* targe
         binding->UpdateTarget();
     }
 }
-

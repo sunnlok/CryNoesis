@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -63,27 +62,24 @@ Noesis::Ptr<Noesis::Freezable> NoesisApp::EventTrigger::CreateInstanceCore() con
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void NoesisApp::EventTrigger::StaticOnEventNameChanged(DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs& e)
-{
-    const Noesis::String& oldName = *static_cast<const Noesis::String*>(e.oldValue);
-    const Noesis::String& newName = *static_cast<const Noesis::String*>(e.newValue);
-
-    EventTrigger* trigger = static_cast<EventTrigger*>(d);
-    trigger->OnEventNameChanged(oldName.Str(), newName.Str());
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 NS_BEGIN_COLD_REGION
 
 NS_IMPLEMENT_REFLECTION(NoesisApp::EventTrigger, "NoesisApp.EventTrigger")
 {
     Noesis::DependencyData* data = NsMeta<Noesis::DependencyData>(Noesis::TypeOf<SelfClass>());
     data->RegisterProperty<Noesis::String>(EventNameProperty, "EventName",
-        Noesis::PropertyMetadata::Create(Noesis::String("Loaded"),
-            Noesis::PropertyChangedCallback(StaticOnEventNameChanged)));
+        Noesis::PropertyMetadata::Create(Noesis::String("Loaded"), Noesis::PropertyChangedCallback(
+    [](DependencyObject* d,
+        const Noesis::DependencyPropertyChangedEventArgs& e)
+    {
+        EventTrigger* trigger = static_cast<EventTrigger*>(d);
+        const Noesis::String& oldName = e.OldValue<Noesis::String>();
+        const Noesis::String& newName = e.NewValue<Noesis::String>();
+        trigger->OnEventNameChanged(oldName.Str(), newName.Str());
+    })));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* NoesisApp::EventTrigger::EventNameProperty;
 
+NS_END_COLD_REGION

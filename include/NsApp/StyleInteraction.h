@@ -50,17 +50,16 @@ NS_CLANG_WARNING_DISABLE("-Wdocumentation")
 ///    <Grid
 ///      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 ///      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-///      xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-///      xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions"
+///      xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
 ///      xmlns:noesis="clr-namespace:NoesisGUIExtensions;assembly=Noesis.GUI.Extensions">
 ///      <Grid.Resources>
 ///        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
 ///          <Setter Property="noesis:StyleInteraction.Triggers">
 ///            <Setter.Value>
 ///              <noesis:StyleTriggerCollection>
-///                <i:EventTrigger EventName="Click">
-///                  <ei:PlaySoundAction Source="Sounds/ButtonClick.wav" />
-///                </i:EventTrigger>
+///                <b:EventTrigger EventName="Click">
+///                  <b:PlaySoundAction Source="Sounds/ButtonClick.wav" />
+///                </b:EventTrigger>
 ///              </noesis:StyleTriggerCollection>
 ///            </Setter.Value>
 ///          </Setter>
@@ -73,12 +72,6 @@ struct NS_APP_INTERACTIVITY_API StyleInteraction
 {
     static const Noesis::DependencyProperty* BehaviorsProperty;
     static const Noesis::DependencyProperty* TriggersProperty;
-
-private:
-    static void OnBehaviorsChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
-    static void OnTriggersChanged(Noesis::DependencyObject* d,
-        const Noesis::DependencyPropertyChangedEventArgs& e);
 
     NS_DECLARE_REFLECTION(StyleInteraction, Noesis::NoParent);
 };

@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -113,7 +112,7 @@ void CollectionSortBehavior::SortItems()
     sorted->Add(list->GetComponent(0));
     for (int i = 1; i < numItems; ++i)
     {
-        Noesis::BaseComponent* item = list->GetComponent(i);
+        Noesis::Ptr<Noesis::BaseComponent> item = list->GetComponent(i);
         int insertIndex = BinarySearch(comparer, sorted, item, 0, i - 1);
         sorted->Insert(insertIndex, item);
     }
@@ -230,42 +229,6 @@ void CollectionSortBehavior::UnregisterComparer(SortComparer* comparer)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void CollectionSortBehavior::OnComparerChanged(Noesis::DependencyObject*  d,
-    const Noesis::DependencyPropertyChangedEventArgs& e)
-{
-    CollectionSortBehavior* behavior = (CollectionSortBehavior*)d;
-
-    SortComparer* oldComparer = static_cast<const Noesis::Ptr<SortComparer>*>(e.oldValue)->GetPtr();
-    behavior->UnregisterComparer(oldComparer);
-
-    SortComparer* newComparer = static_cast<const Noesis::Ptr<SortComparer>*>(e.newValue)->GetPtr();
-    behavior->RegisterComparer(newComparer);
-
-    behavior->SortItems();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void CollectionSortBehavior::OnItemsSourceChanged(Noesis::DependencyObject*  d,
-    const Noesis::DependencyPropertyChangedEventArgs& e)
-{
-    CollectionSortBehavior* behavior = (CollectionSortBehavior*)d;
-
-    Noesis::BaseComponent* oldSource = static_cast<const Noesis::Ptr<Noesis::BaseComponent>*>(e.oldValue)->GetPtr();
-    behavior->UnregisterItemsSource(oldSource);
-
-    Noesis::BaseComponent* newSource = static_cast<const Noesis::Ptr<Noesis::BaseComponent>*>(e.newValue)->GetPtr();
-    behavior->RegisterItemsSource(newSource);
-
-    SortComparer* comparer = behavior->GetComparer();
-    if (comparer != nullptr)
-    {
-        comparer->SetItemsSource(newSource);
-    }
-
-    behavior->SortItems();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 NS_BEGIN_COLD_REGION
 
 NS_IMPLEMENT_REFLECTION(CollectionSortBehavior, "NoesisGUIExtensions.CollectionSortBehavior")
@@ -273,16 +236,47 @@ NS_IMPLEMENT_REFLECTION(CollectionSortBehavior, "NoesisGUIExtensions.CollectionS
     Noesis::DependencyData* data = NsMeta<Noesis::DependencyData>(Noesis::TypeOf<SelfClass>());
     data->RegisterProperty<Noesis::Ptr<SortComparer>>(ComparerProperty, "Comparer",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<SortComparer>(),
-            Noesis::PropertyChangedCallback(OnComparerChanged)));
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs& e)
+    {
+        CollectionSortBehavior* behavior = (CollectionSortBehavior*)d;
+
+        SortComparer* oldComparer = e.OldValue<Noesis::Ptr<SortComparer>>();
+        behavior->UnregisterComparer(oldComparer);
+
+        SortComparer* newComparer = e.NewValue<Noesis::Ptr<SortComparer>>();
+        behavior->RegisterComparer(newComparer);
+
+        behavior->SortItems();
+    })));
     data->RegisterProperty<Noesis::Ptr<Noesis::BaseComponent>>(ItemsSourceProperty, "ItemsSource",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<Noesis::BaseComponent>(),
-            Noesis::PropertyChangedCallback(OnItemsSourceChanged)));
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs& e)
+    {
+        CollectionSortBehavior* behavior = (CollectionSortBehavior*)d;
+
+        Noesis::BaseComponent* oldSource = e.OldValue<Noesis::Ptr<Noesis::BaseComponent>>();
+        behavior->UnregisterItemsSource(oldSource);
+
+        Noesis::BaseComponent* newSource = e.NewValue<Noesis::Ptr<Noesis::BaseComponent>>();
+        behavior->RegisterItemsSource(newSource);
+
+        SortComparer* comparer = behavior->GetComparer();
+        if (comparer != nullptr)
+        {
+            comparer->SetItemsSource(newSource);
+        }
+
+        behavior->SortItems();
+    })));
     data->RegisterProperty<Noesis::Ptr<SortedCollection>>(SortedItemsProperty, "SortedItems",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<SortedCollection>()));
 }
+
+NS_END_COLD_REGION
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* CollectionSortBehavior::ComparerProperty;
 const Noesis::DependencyProperty* CollectionSortBehavior::ItemsSourceProperty;
 const Noesis::DependencyProperty* CollectionSortBehavior::SortedItemsProperty;
-

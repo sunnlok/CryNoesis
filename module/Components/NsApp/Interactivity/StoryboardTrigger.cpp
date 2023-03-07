@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -54,14 +53,6 @@ void StoryboardTrigger::OnStoryboardChanged(const Noesis::DependencyPropertyChan
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void StoryboardTrigger::OnStoryboardChanged(DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs& e)
-{
-    StoryboardTrigger* trigger = (StoryboardTrigger*)d;
-    trigger->OnStoryboardChanged(e);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 NS_BEGIN_COLD_REGION
 
 NS_IMPLEMENT_REFLECTION(StoryboardTrigger, "NoesisApp.StoryboardTrigger")
@@ -69,9 +60,15 @@ NS_IMPLEMENT_REFLECTION(StoryboardTrigger, "NoesisApp.StoryboardTrigger")
     Noesis::DependencyData* data = NsMeta<Noesis::DependencyData>(Noesis::TypeOf<SelfClass>());
     data->RegisterProperty<Noesis::Ptr<Noesis::Storyboard>>(StoryboardProperty, "Storyboard",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<Noesis::Storyboard>(),
-            Noesis::PropertyChangedCallback(OnStoryboardChanged)));
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs& e)
+    {
+        StoryboardTrigger* trigger = (StoryboardTrigger*)d;
+        trigger->OnStoryboardChanged(e);
+    })));
 }
+
+NS_END_COLD_REGION
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* StoryboardTrigger::StoryboardProperty;
-

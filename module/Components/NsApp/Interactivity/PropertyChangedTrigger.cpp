@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -15,7 +14,7 @@ using namespace NoesisApp;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-PropertyChangedTrigger::PropertyChangedTrigger(): mAllFlags(0)
+PropertyChangedTrigger::PropertyChangedTrigger()
 {
 }
 
@@ -49,22 +48,12 @@ Noesis::Ptr<PropertyChangedTrigger> PropertyChangedTrigger::CloneCurrentValue() 
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void PropertyChangedTrigger::EvaluateTriggerChange()
-{
-    if (mFlags.initCompleted)
-    {
-        EvaluateBindingChange();
-    }
-    else
-    {
-        mFlags.evaluateRequired = true;
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 void PropertyChangedTrigger::EvaluateBindingChange()
 {
-    InvokeActions(0);
+    if (GetAssociatedObject() != 0)
+    {
+        InvokeActions(0);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -74,22 +63,14 @@ Noesis::Ptr<Noesis::Freezable> PropertyChangedTrigger::CreateInstanceCore() cons
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void PropertyChangedTrigger::OnPostInit()
+void PropertyChangedTrigger::OnAttached()
 {
-    mFlags.initCompleted = true;
+    ParentClass::OnAttached();
 
-    if (mFlags.evaluateRequired)
+    if (GetBinding() != 0)
     {
         EvaluateBindingChange();
     }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-void PropertyChangedTrigger::OnBindingChanged(DependencyObject* d,
-    const Noesis::DependencyPropertyChangedEventArgs&)
-{
-    PropertyChangedTrigger* trigger = (PropertyChangedTrigger*)d;
-    trigger->EvaluateTriggerChange();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,9 +80,16 @@ NS_IMPLEMENT_REFLECTION(PropertyChangedTrigger, "NoesisApp.PropertyChangedTrigge
 {
     Noesis::DependencyData* data = NsMeta<Noesis::DependencyData>(Noesis::TypeOf<SelfClass>());
     data->RegisterProperty<Noesis::Ptr<BaseComponent>>(BindingProperty, "Binding",
-        Noesis::PropertyMetadata::Create(Noesis::Ptr<BaseComponent>(), Noesis::PropertyChangedCallback(OnBindingChanged)));
+        Noesis::PropertyMetadata::Create(Noesis::Ptr<BaseComponent>(),
+            Noesis::PropertyChangedCallback(
+    [](Noesis::DependencyObject* d, const Noesis::DependencyPropertyChangedEventArgs&)
+    {
+        PropertyChangedTrigger* trigger = (PropertyChangedTrigger*)d;
+        trigger->EvaluateBindingChange();
+    })));
 }
+
+NS_END_COLD_REGION
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* PropertyChangedTrigger::BindingProperty;
-

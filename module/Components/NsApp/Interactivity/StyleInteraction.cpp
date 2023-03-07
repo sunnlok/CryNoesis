@@ -1,4 +1,3 @@
-#include "StdAfx.h" 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // NoesisGUI - http://www.noesisengine.com
 // Copyright (c) 2013 Noesis Technologies S.L. All Rights Reserved.
@@ -17,12 +16,11 @@ using namespace NoesisApp;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void StyleInteraction::OnBehaviorsChanged(Noesis::DependencyObject* d,
+static void OnStyleBehaviorsChanged(Noesis::DependencyObject* d,
     const Noesis::DependencyPropertyChangedEventArgs& e)
 {
     BehaviorCollection* behaviors = Interaction::GetBehaviors(d);
-    StyleBehaviorCollection* styleBehaviors = static_cast<const Noesis::Ptr<StyleBehaviorCollection>*>(
-        e.newValue)->GetPtr();
+    StyleBehaviorCollection* styleBehaviors = e.NewValue<Noesis::Ptr<StyleBehaviorCollection>>();
     int numBehaviors = styleBehaviors != nullptr ? styleBehaviors->Count() : 0;
     for (int i = 0; i < numBehaviors; ++i)
     {
@@ -32,12 +30,11 @@ void StyleInteraction::OnBehaviorsChanged(Noesis::DependencyObject* d,
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void StyleInteraction::OnTriggersChanged(Noesis::DependencyObject* d,
+static void OnStyleTriggersChanged(Noesis::DependencyObject* d,
     const Noesis::DependencyPropertyChangedEventArgs& e)
 {
     TriggerCollection* triggers = Interaction::GetTriggers(d);
-    StyleTriggerCollection* styleTriggers = static_cast<const Noesis::Ptr<StyleTriggerCollection>*>(
-        e.newValue)->GetPtr();
+    StyleTriggerCollection* styleTriggers = e.NewValue<Noesis::Ptr<StyleTriggerCollection>>();
     int numTriggers = styleTriggers != nullptr ? styleTriggers->Count() : 0;
     for (int i = 0; i < numTriggers; ++i)
     {
@@ -54,15 +51,17 @@ NS_IMPLEMENT_REFLECTION(StyleInteraction, "NoesisGUIExtensions.StyleInteraction"
     Noesis::DependencyData* data = NsMeta<Noesis::DependencyData>(Noesis::TypeOf<SelfClass>());
     data->RegisterProperty<Noesis::Ptr<StyleBehaviorCollection>>(BehaviorsProperty, "Behaviors",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<StyleBehaviorCollection>(),
-            &StyleInteraction::OnBehaviorsChanged));
+            Noesis::PropertyChangedCallback(OnStyleBehaviorsChanged)));
     data->RegisterProperty<Noesis::Ptr<StyleTriggerCollection>>(TriggersProperty, "Triggers",
         Noesis::PropertyMetadata::Create(Noesis::Ptr<StyleTriggerCollection>(),
-            &StyleInteraction::OnTriggersChanged));
+            Noesis::PropertyChangedCallback(OnStyleTriggersChanged)));
 }
 
 NS_IMPLEMENT_REFLECTION_(StyleBehaviorCollection, "NoesisGUIExtensions.StyleBehaviorCollection")
 NS_IMPLEMENT_REFLECTION_(StyleTriggerCollection, "NoesisGUIExtensions.StyleTriggerCollection")
 
+NS_END_COLD_REGION
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 const Noesis::DependencyProperty* StyleInteraction::BehaviorsProperty;
 const Noesis::DependencyProperty* StyleInteraction::TriggersProperty;
-
