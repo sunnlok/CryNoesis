@@ -64,9 +64,9 @@ static void LoadXamlCmd(IConsoleCmdArgs* pArgs)
 	g_pImplementation->CreateView(pArgs->GetArg(1), { gEnv->pRenderer->GetWidth(), gEnv->pRenderer->GetHeight() });
 }
 
-static void PlaySound(void* user, const char* filename, float volume)
+static void PlaySound(void* user, const Noesis::Uri& filename, float volume)
 {
-	auto actualFilename = PathUtil::GetFileName(filename);
+	auto actualFilename = PathUtil::GetFileName(filename.ToString().Str());
 	auto triggerID = CryAudio::StringToId(actualFilename);
 
 	gEnv->pAudioSystem->ExecuteTrigger(triggerID);
@@ -138,7 +138,7 @@ void Cry::Ns::CImplementation::Init()
 	m_startTime = gEnv->pTimer->GetFrameStartTime();
 	m_pInputHandler = std::make_unique<CInputHandler>(this);
 
-	m_pRenderDevice.Reset(new Ns::CRenderDevice());
+	m_pRenderDevice.Reset(new Cry::Ns::CRenderDevice());
 }
 
 void Cry::Ns::CImplementation::Update(float delta)

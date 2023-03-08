@@ -23,6 +23,7 @@ namespace Cry {
 				Count
 			};
 
+			// TODO: Change this to update formats 
 			constexpr SInputElementDescription gElementDescriptions[] =
 			{
 				{ "POSITION", 0, EInputElementFormat::FORMAT_R32G32_FLOAT, 0, APPEND_ALIGNED_ELEMENT, EInputSlotClassification::PER_VERTEX_DATA, 0 },
@@ -131,6 +132,8 @@ namespace Cry {
 				return 1ull << static_cast<uint64>(bit);
 			}
 
+			// TODO: need to all update to new version of 3.1
+			
 			constexpr std::array<uint64, Noesis::Shader::Count> gShaderMasks = {
 				ToMask(Effect::Rgba),ToMask(Effect::Mask),
 				//Path_Solid
@@ -291,6 +294,8 @@ namespace Cry {
 			constexpr TDescInfoList g_layoutInfoList = {
 				MakeInfo<Shader::RGBA, In::Pos>(),
 				MakeInfo<Shader::Mask, In::Pos>(),
+
+				MakeInfo<Shader::Clear, In::Pos>(),
 
 				MakeInfo<Shader::Path_Solid, In::Pos, In::Color>(),
 				MakeInfo<Shader::Path_Linear, In::Pos, In::Tex0>(),

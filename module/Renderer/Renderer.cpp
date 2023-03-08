@@ -228,6 +228,11 @@ void Ns::CRenderDevice::ResolveRenderTarget(::Noesis::RenderTarget* surface, con
 	//The method or operation is not implemented.
 }
 
+void Cry::Ns::CRenderDevice::EndOnscreenRender()
+{
+	EndActualRender();
+}
+
 void* Ns::CRenderDevice::MapVertices(uint32_t bytes)
 {
 	if (m_pCurrentView->activeVertexBuffer != Cry::Renderer::Buffers::CINVALID_BUFFER)
@@ -476,6 +481,11 @@ void Cry::Ns::CRenderDevice::BeginOffscreenRender()
 void Cry::Ns::CRenderDevice::EndOffscreenRender()
 {
 	EndActualRender();
+}
+
+void Cry::Ns::CRenderDevice::BeginOnscreenRender()
+{
+	BeginActualRender();
 }
 
 void Cry::Ns::CRenderDevice::RT_CheckAndUpdateViewTarget(Cry::Ns::ViewRenderData& viewData)

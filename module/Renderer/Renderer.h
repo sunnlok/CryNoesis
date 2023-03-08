@@ -45,23 +45,29 @@ namespace Cry
 			virtual ~CRenderDevice();
 	
 			//RenderDevice
-			const ::Noesis::DeviceCaps& GetCaps() const override;
-			::Noesis::Ptr<::Noesis::RenderTarget> CreateRenderTarget(const char* label, uint32_t width, uint32_t height, uint32_t sampleCount, bool needsStencil) override;
-			::Noesis::Ptr<::Noesis::RenderTarget> CloneRenderTarget(const char* label, ::Noesis::RenderTarget* surface) override;
-			::Noesis::Ptr<::Noesis::Texture> CreateTexture(const char* label, uint32_t width, uint32_t height, uint32_t numLevels, ::Noesis::TextureFormat::Enum format, const void** data) override;
-			void UpdateTexture(::Noesis::Texture* texture, uint32_t level, uint32_t x, uint32_t y, uint32_t width, uint32_t height, const void* data) override;
+			virtual const ::Noesis::DeviceCaps& GetCaps() const override;
+			virtual ::Noesis::Ptr<::Noesis::RenderTarget> CreateRenderTarget(const char* label, uint32_t width, uint32_t height, uint32_t sampleCount, bool needsStencil) override;
+			virtual ::Noesis::Ptr<::Noesis::RenderTarget> CloneRenderTarget(const char* label, ::Noesis::RenderTarget* surface) override;
+			virtual ::Noesis::Ptr<::Noesis::Texture> CreateTexture(const char* label, uint32_t width, uint32_t height, uint32_t numLevels, ::Noesis::TextureFormat::Enum format, const void** data) override;
+			virtual void UpdateTexture(::Noesis::Texture* texture, uint32_t level, uint32_t x, uint32_t y, uint32_t width, uint32_t height, const void* data) override;
 
-			void BeginOffscreenRender() override;
-			void SetRenderTarget(::Noesis::RenderTarget* surface) override;
+			virtual void BeginOffscreenRender() override;
+			virtual void SetRenderTarget(::Noesis::RenderTarget* surface) override;
 
-			void ResolveRenderTarget(::Noesis::RenderTarget* surface, const ::Noesis::Tile* tiles, uint32_t numTiles) override;
-			void EndOffscreenRender() override;
+			virtual void ResolveRenderTarget(::Noesis::RenderTarget* surface, const ::Noesis::Tile* tiles, uint32_t numTiles) override;
+			virtual void EndOffscreenRender() override;
 
-			void* MapVertices(uint32_t bytes) override;
-			void UnmapVertices() override;
+			/// Begins rendering onscreen commands
+			virtual void BeginOnscreenRender() override;
 
-			void* MapIndices(uint32_t bytes) override;
-			void UnmapIndices() override;
+			/// Ends rendering onscreen commands
+			virtual void EndOnscreenRender() override;
+
+			virtual void* MapVertices(uint32_t bytes) override;
+			virtual void UnmapVertices() override;
+
+			virtual void* MapIndices(uint32_t bytes) override;
+			virtual void UnmapIndices() override;
 
 
 			virtual void DrawBatch(const ::Noesis::Batch& batch) override;
@@ -73,6 +79,7 @@ namespace Cry
 
 			std::unique_ptr<ViewRenderData> InitializeRenderViewData(ViewData &viewData);
 			void DestroyView(TRenderViewDataPtr pRenderData, ::Noesis::Ptr<::Noesis::IView> pView);
+
 
 
 		protected:

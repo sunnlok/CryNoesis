@@ -31,6 +31,9 @@ namespace Cry
 			virtual bool IsInverted() const override;
 
 			ITexture* GetActualTexture() const { return m_pTexture.get(); }
+
+			virtual bool HasAlpha() const override;
+
 		protected:
 			_smart_ptr<ITexture> m_pTexture = nullptr;
 		};

@@ -86,7 +86,7 @@ Noesis::Ptr<Noesis::Stream> Cry::Ns::CXamlProvider::LoadXaml(const Noesis::Uri& 
 	}
 
 	if (pStream.GetPtr())
-		m_xamls.emplace(uri);
+		m_xamls.emplace(uri.ToString());
 
 	return pStream;
 }

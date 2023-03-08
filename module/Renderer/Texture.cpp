@@ -31,6 +31,13 @@ bool Cry::Ns::CTextureWrapper::IsInverted() const
 	return false;
 }
 
+bool Cry::Ns::CTextureWrapper::HasAlpha() const
+{
+	if(!m_pTexture)
+		return false;
+	return false;
+}
+
 ::Noesis::Texture* Cry::Ns::CRenderTarget::GetTexture()
 {
 	return m_target;
