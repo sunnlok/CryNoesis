@@ -20,7 +20,6 @@
 #include "ComponentRegistration.h"
 #include "ViewManager.h"
 
-
 static std::unique_ptr<Cry::Ns::CImplementation> g_pImplementation;
 
 Cry::Ns::CImplementation* Cry::Ns::CImplementation::Instantiate()
@@ -88,7 +87,9 @@ Cry::Ns::CImplementation::CImplementation()
 	Noesis::SetLogHandler(&Ns::Detail::LogHandler);
 	Noesis::SetAssertHandler(&Ns::Detail::AssertHandler);
 
-	GUI::Init(NS_LICENSE_NAME, NS_LICENSE_KEY);
+	GUI::SetLicense("Bismarck", "pdrTp1uR06fdOOevw+ayewv8c0jv6Ej4Upj+3kl2mIuD7Ert");
+
+	GUI::Init();
 	{
 		using namespace Noesis::GUI;
 

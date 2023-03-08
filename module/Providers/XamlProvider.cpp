@@ -60,7 +60,7 @@ Cry::Ns::CXamlProvider::~CXamlProvider()
 
 Noesis::Ptr<Noesis::Stream> Cry::Ns::CXamlProvider::LoadXaml(const Noesis::Uri& uri)
 {
-	std::filesystem::path  path = std::filesystem::u8path(uri.ToString().Str()).make_preferred();
+	std::filesystem::path  path = std::filesystem::u8path(uri.ToString()).make_preferred();
 
 	if (!path.has_extension())
 		path += std::filesystem::path(".xaml");
@@ -86,7 +86,7 @@ Noesis::Ptr<Noesis::Stream> Cry::Ns::CXamlProvider::LoadXaml(const Noesis::Uri& 
 	}
 
 	if (pStream.GetPtr())
-		m_xamls.emplace(uri.ToString());
+		m_xamls.emplace(uri.ToString().Str());
 
 	return pStream;
 }

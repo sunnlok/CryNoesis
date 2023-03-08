@@ -1,4 +1,5 @@
 #pragma once
+#include <NsGui/CachedFontProvider.h>
 #include <NsGui/XamlProvider.h>
 #include <filesystem>
 

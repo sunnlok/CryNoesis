@@ -10,10 +10,6 @@ endif()
 
 set(NS_SDK "${SDK_DIR}/Noesis" CACHE PATH "Noesis sdk path")
 
-
-set(NS_LICENSE_NAME "" CACHE STRING "The noesis Licsense Name")
-set(NS_LICENSE_KEY "" CACHE STRING "The noesis Licsense Key")
-
 if(NOT EXISTS ${NS_SDK})
  message("Noesis sdk path not found at: ${NS_SDK}")
  return()
