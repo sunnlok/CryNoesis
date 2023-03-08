@@ -16,8 +16,10 @@ namespace Cry {
 				Color,
 				Tex0,
 				Tex1,
-				Tex2,
 				Coverage,
+				Rect, 
+				Tile,
+				ImagePos,
 				Count
 			};
 
@@ -295,10 +297,10 @@ namespace Cry {
 				MakeInfo<Shader::Path_Radial, In::Pos, In::Tex0>(),
 				MakeInfo<Shader::Path_Pattern, In::Pos, In::Tex0>(),
 
-				MakeInfo<Shader::PathAA_Solid, In::Pos, In::Color, In::Coverage>(),
-				MakeInfo<Shader::PathAA_Linear, In::Pos, In::Tex0, In::Coverage>(),
-				MakeInfo<Shader::PathAA_Radial, In::Pos, In::Tex0, In::Coverage>(),
-				MakeInfo<Shader::PathAA_Pattern, In::Pos, In::Tex0, In::Coverage>(),
+				MakeInfo<Shader::Path_AA_Solid, In::Pos, In::Color, In::Coverage>(),
+				MakeInfo<Shader::Path_AA_Linear, In::Pos, In::Tex0, In::Coverage>(),
+				MakeInfo<Shader::Path_AA_Radial, In::Pos, In::Tex0, In::Coverage>(),
+				MakeInfo<Shader::Path_AA_Pattern, In::Pos, In::Tex0, In::Coverage>(),
 
 				MakeInfo<Shader::SDF_Solid, In::Pos, In::Color, In::Tex1>(),
 				MakeInfo<Shader::SDF_Linear, In::Pos, In::Tex0, In::Tex1>(),
@@ -310,48 +312,15 @@ namespace Cry {
 				MakeInfo<Shader::SDF_LCD_Radial, In::Pos, In::Tex0, In::Tex1>(),
 				MakeInfo<Shader::SDF_LCD_Pattern, In::Pos, In::Tex0, In::Tex1>(),
 
-				MakeInfo<Shader::Image_Opacity_Solid, In::Pos, In::Color, In::Tex1>(),
-				MakeInfo<Shader::Image_Opacity_Linear, In::Pos, In::Tex0, In::Tex1>(),
-				MakeInfo<Shader::Image_Opacity_Radial, In::Pos, In::Tex0, In::Tex1>(),
-				MakeInfo<Shader::Image_Opacity_Pattern, In::Pos, In::Tex0, In::Tex1>(),
+				MakeInfo<Shader::Opacity_Solid, In::Pos, In::Color, In::Tex1>(),
+				MakeInfo<Shader::Opacity_Linear, In::Pos, In::Tex0, In::Tex1>(),
+				MakeInfo<Shader::Opacity_Radial, In::Pos, In::Tex0, In::Tex1>(),
+				MakeInfo<Shader::Opacity_Pattern, In::Pos, In::Tex0, In::Tex1>(),
 
-				MakeInfo<Shader::Image_Shadow35V, In::Pos, In::Color, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Shadow63V, In::Pos, In::Color, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Shadow127V, In::Pos, In::Color, In::Tex1, In::Tex2>(),
+				MakeInfo<Shader::Shadow, In::Pos, In::Color, In::Coverage>(),
+				MakeInfo<Shader::Blur, In::Pos, In::Coverage>()
 
-				MakeInfo<Shader::Image_Shadow35H_Solid, In::Pos, In::Color, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Shadow35H_Linear, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Shadow35H_Radial, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Shadow35H_Pattern, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-
-				MakeInfo<Shader::Image_Shadow63H_Solid, In::Pos, In::Color, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Shadow63H_Linear,In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Shadow63H_Radial, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Shadow63H_Pattern, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-
-				MakeInfo< Shader::Image_Shadow127H_Solid, In::Pos, In::Color, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Shadow127H_Linear, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Shadow127H_Radial, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Shadow127H_Pattern, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-
-				MakeInfo<Shader::Image_Blur35V, In::Pos, In::Color, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Blur63V, In::Pos, In::Color, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Blur127V, In::Pos, In::Color, In::Tex1, In::Tex2>(),
-
-				MakeInfo<Shader::Image_Blur35H_Solid, In::Pos, In::Color, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Blur35H_Linear, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Blur35H_Radial, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Blur35H_Pattern, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-
-				MakeInfo<Shader::Image_Blur63H_Solid, In::Pos, In::Color, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Blur63H_Linear, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Blur63H_Radial, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Blur63H_Pattern, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-
-				MakeInfo<Shader::Image_Blur127H_Solid, In::Pos, In::Color, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Blur127H_Linear,In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Blur127H_Radial, In::Pos, In::Tex0, In::Tex1, In::Tex2>(),
-				MakeInfo<Shader::Image_Blur127H_Pattern, In::Pos, In::Tex0, In::Tex1, In::Tex2>()
+				
 			};
 		}
 	}

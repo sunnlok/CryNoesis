@@ -51,14 +51,11 @@ namespace Cry
 			::Noesis::Ptr<::Noesis::Texture> CreateTexture(const char* label, uint32_t width, uint32_t height, uint32_t numLevels, ::Noesis::TextureFormat::Enum format, const void** data) override;
 			void UpdateTexture(::Noesis::Texture* texture, uint32_t level, uint32_t x, uint32_t y, uint32_t width, uint32_t height, const void* data) override;
 
-			void BeginRender(bool offscreen) override;
+			void BeginOffscreenRender() override;
 			void SetRenderTarget(::Noesis::RenderTarget* surface) override;
 
-			void BeginTile(const ::Noesis::Tile& tile, uint32_t surfaceWidth, uint32_t surfaceHeight) override;
-			void EndTile() override;
-
 			void ResolveRenderTarget(::Noesis::RenderTarget* surface, const ::Noesis::Tile* tiles, uint32_t numTiles) override;
-			void EndRender() override;
+			void EndOffscreenRender() override;
 
 			void* MapVertices(uint32_t bytes) override;
 			void UnmapVertices() override;
@@ -76,6 +73,8 @@ namespace Cry
 
 			std::unique_ptr<ViewRenderData> InitializeRenderViewData(ViewData &viewData);
 			void DestroyView(TRenderViewDataPtr pRenderData, ::Noesis::Ptr<::Noesis::IView> pView);
+
+
 		protected:
 
 
@@ -85,8 +84,6 @@ namespace Cry
 
 			void BeginActualRender();
 			void EndActualRender();
-			void BeginOffscreenRender();
-			void EndOffscreenRender();
 
 			void RT_CheckAndUpdateViewTarget(Cry::Ns::ViewRenderData &ViewData);
 

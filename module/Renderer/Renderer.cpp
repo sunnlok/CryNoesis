@@ -217,86 +217,15 @@ void Ns::CRenderDevice::UpdateTexture(::Noesis::Texture* texture, uint32_t level
 	gEnv->pRenderer->UpdateTextureInVideoMemory(pTex->GetTextureID(), (unsigned char*)data, x, y, width, height, texFormat);
 }
 
-void Ns::CRenderDevice::BeginRender(bool offscreen)
-{
-	m_bRenderingOffscreen = offscreen;
-
-	if (offscreen)
-		BeginOffscreenRender();
-	else
-		BeginActualRender();
-
-}
-
 void Ns::CRenderDevice::SetRenderTarget(::Noesis::RenderTarget* surface)
 {
 	m_pCurrentRenderTarget = static_cast<Ns::CRenderTarget*>(surface);
 }
 
-void Ns::CRenderDevice::BeginTile(const ::Noesis::Tile& tile, uint32_t surfaceWidth, uint32_t surfaceHeight)
-{
-	//Todo: refine all of this, far to many drawvalls and different rectangle definitions ._.
-
-
-	uint32_t x = tile.x;
-	uint32_t y = (uint32_t)surfaceHeight - (tile.y + tile.height);
-
-	SRenderViewport viewport{
-		(int)0,
-		(int)0,
-		(int)surfaceWidth,
-		(int)surfaceHeight,
-	};
-	
-
-	Vec4_tpl<ulong>  clearRect{
-		(ulong)x,
-		(ulong)y,
-		(ulong)x + tile.width,
-		(ulong)y + tile.height,
-	};
-
-	m_pPipeline->RT_ClearSurfaceRegion(*m_pCurrentView->stage, m_pCurrentRenderTarget->GetColor(), Col_Transparent, 1, &clearRect);
-	m_pPipeline->RT_ClearDepthSurfaceRegion(*m_pCurrentView->stage, m_pCurrentRenderTarget->GetDepth(), 0x00000002l, Clr_Unused.r, Val_Stencil, 1, &clearRect);
-
-	
-
-	Vec4_tpl<ulong>  rect{
-		(ulong)x,
-		(ulong)y,
-		(ulong)tile.width,
-		(ulong)tile.height,
-	};
-
-	
-
-	Cry::Renderer::Pipeline::Pass::SPassParams params{
-		viewport,
-		m_pCurrentRenderTarget->GetColor(),
-		m_pCurrentRenderTarget->GetDepth(),
-		0,
-		rect
-	};
-
-	m_pPipeline->RT_BeginNewPass(*m_pCurrentView->stage, params);
-}
-
-void Ns::CRenderDevice::EndTile()
-{
-	m_pPipeline->RT_EndPass(*m_pCurrentView->stage, true);
-}
 
 void Ns::CRenderDevice::ResolveRenderTarget(::Noesis::RenderTarget* surface, const ::Noesis::Tile* tiles, uint32_t numTiles)
 {
 	//The method or operation is not implemented.
-}
-
-void Ns::CRenderDevice::EndRender()
-{
-	if (m_bRenderingOffscreen)
-		EndOffscreenRender();
-	else
-		EndActualRender();
 }
 
 void* Ns::CRenderDevice::MapVertices(uint32_t bytes)
@@ -379,7 +308,7 @@ void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 	//if (m_pCurrentView->vertexCBHash != batch.projMtxHash)
 	{
 		SBufferValuePtr matrixPtr{
-		(uint8*)batch.projMtx,
+		(uint8*)batch.stencilRef,
 		16 * sizeof(float)
 		};
 		matrixBuffers.push_back(matrixPtr);
@@ -393,55 +322,7 @@ void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 		};
 		
 		buffers.push_back(matrixBuffer);
-		m_pCurrentView->vertexCBHash = batch.projMtxHash;
-	}
-	
-	StaticDynArray<SBufferValuePtr, 3> pixelBuffers;
-	if (batch.rgba != 0 || batch.radialGrad != 0 || batch.opacity != 0)
-	{
-		uint32 hash = batch.rgbaHash ^ batch.radialGradHash ^ batch.opacityHash;
-		//if (m_pCurrentView->pixelCBHash != hash)
-		{
-			if (batch.rgba != 0)
-			{
-				SBufferValuePtr pixelBuffer{
-				(uint8*)batch.rgba,
-					4 * sizeof(float)
-				};
-				pixelBuffers.push_back(pixelBuffer);
-			}
-
-			if (batch.radialGrad != 0)
-			{
-				SBufferValuePtr pixelBuffer{
-				(uint8*)batch.radialGrad,
-					8 * sizeof(float)
-				};
-				pixelBuffers.push_back(pixelBuffer);
-			}
-
-			if (batch.opacity != 0)
-			{
-				SBufferValuePtr pixelBuffer{
-				(uint8*)batch.opacity,
-					sizeof(float)
-				};
-				pixelBuffers.push_back(pixelBuffer);
-			}
-
-			SMultiVlaueConstantBuffer pixelBuffer{
-			Cry::Renderer::Buffers::CINVALID_BUFFER,
-			true,
-			(Cry::Renderer::Shader::EConstantSlot)0,
-			Cry::Renderer::Shader::EShaderStages::ssPixel,
-			pixelBuffers.empty() ? TArray<SBufferValuePtr>() : TArray(&pixelBuffers[0], pixelBuffers.size())
-			};
-
-			buffers.push_back(pixelBuffer);
-
-			m_pCurrentView->pixelCBHash = hash;
-		}
-
+		m_pCurrentView->vertexCBHash = batch.vertexOffset;
 	}
 
 	StaticDynArray<SBufferValuePtr, 1> textureBuffers;
@@ -478,32 +359,6 @@ void Ns::CRenderDevice::DrawBatch(const ::Noesis::Batch& batch)
 			m_pCurrentView->texDimensionsCBHash = hash;
 		}
 
-	}
-
-	StaticDynArray<SBufferValuePtr, 1> effectBuffers;
-	if (batch.effectParamsSize != 0)
-	{
-		//if (m_pCurrentView->effectCBHash != batch.effectParamsHash)
-		{
-			SBufferValuePtr effectBuffer{
-				(uint8*)batch.effectParams,
-					batch.effectParamsSize * sizeof(float)
-			};
-
-			effectBuffers.push_back(effectBuffer);
-
-			SMultiVlaueConstantBuffer effectValues{
-			Cry::Renderer::Buffers::CINVALID_BUFFER,
-			true,
-			(Cry::Renderer::Shader::EConstantSlot)2,
-			Cry::Renderer::Shader::EShaderStages::ssPixel,
-			effectBuffers.empty() ? TArray<SBufferValuePtr>() : TArray(&effectBuffers[0], effectBuffers.size())
-			};
-
-			buffers.push_back(effectValues);
-
-			m_pCurrentView->effectCBHash = batch.effectParamsHash;
-		}
 	}
 
 	SInlineMultiValueConstantParams constantParams;
@@ -615,12 +470,12 @@ void Cry::Ns::CRenderDevice::EndActualRender()
 
 void Cry::Ns::CRenderDevice::BeginOffscreenRender()
 {
-
+	BeginActualRender();
 }
 
 void Cry::Ns::CRenderDevice::EndOffscreenRender()
 {
-
+	EndActualRender();
 }
 
 void Cry::Ns::CRenderDevice::RT_CheckAndUpdateViewTarget(Cry::Ns::ViewRenderData& viewData)
@@ -744,7 +599,7 @@ void Cry::Ns::CRenderDevice::DestroyView(TRenderViewDataPtr pRenderData, ::Noesi
 {
 	//Extend lifetime to destruction on render thread
 	m_pPipeline->ExecuteRenderThreadCommand([pView,pThis = this, pData = pRenderData.release()]() {
-		auto pExtend = pView;
+		::Noesis::Ptr<::Noesis::IView> pExtend = pView;
 		TRenderViewDataPtr pDataPtr(pData);
 		pThis->RT_DestroyView(pData);
 	});
