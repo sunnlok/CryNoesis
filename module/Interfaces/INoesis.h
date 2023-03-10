@@ -5,7 +5,9 @@
 ////////////
 #pragma once
 
-struct Registration
+struct IViewManager;
+
+struct INoesis
 {
-	static void RegisterInteractivityComponents();
+	virtual IViewManager* GetViewManager() const = 0;
 };

@@ -1,72 +1,71 @@
 #include "StdAfx.h"
+
 #include "FileProvider.h"
-#include "CrySystem/File/ICryPak.h"
 #include <NsCore/Ptr.h>
 
-using namespace Cry;
-
-Ns::CPakStream::CPakStream(const char* uri)
+CPakStream::CPakStream(const char* uri)
 {
-	auto handle = gEnv->pCryPak->FOpen(uri, "r");
-	if (!handle)
-		return;
+    auto handle = gEnv->pCryPak->FOpen(uri, "r");
+    if (!handle)
+        return;
 }
 
-Ns::CPakStream::~CPakStream()
+CPakStream::~CPakStream()
 {
-	if (!m_handle)
-		return;
+    if (!m_handle)
+        return;
 
-	gEnv->pCryPak->FClose(m_handle);
-	m_handle = nullptr;
+    gEnv->pCryPak->FClose(m_handle);
+    m_handle = nullptr;
 }
 
-void Ns::CPakStream::SetPosition(uint32_t pos)
+void CPakStream::SetPosition(uint32_t pos)
 {
-	if (!m_handle)
-		return;
+    if (!m_handle)
+        return;
 
-	gEnv->pCryPak->FSeek(m_handle, pos, SEEK_SET);
+    gEnv->pCryPak->FSeek(m_handle, pos, SEEK_SET);
 }
 
-uint32_t Ns::CPakStream::GetPosition() const
+uint32_t CPakStream::GetPosition() const
 {
-	if (!m_handle)
-		return 0;
+    if (!m_handle)
+        return 0;
 
-	return (uint32)gEnv->pCryPak->FTell(m_handle);
+    return (uint32)gEnv->pCryPak->FTell(m_handle);
 }
 
-uint32_t Ns::CPakStream::GetLength() const
+uint32_t CPakStream::GetLength() const
 {
-	if (!m_handle)
-		return 0;
+    if (!m_handle)
+        return 0;
 
-	return gEnv->pCryPak->FGetSize(m_handle);
+    return gEnv->pCryPak->FGetSize(m_handle);
 }
 
-uint32_t Ns::CPakStream::Read(void* buffer, uint32_t size)
+uint32_t CPakStream::Read(void* buffer, uint32_t size)
 {
-	if (!m_handle)
-		return 0;
+    if (!m_handle)
+        return 0;
 
-	return gEnv->pCryPak->FReadRaw(buffer, 1, size, m_handle);
+    return gEnv->pCryPak->FReadRaw(buffer, 1, size, m_handle);
 }
 
-Noesis::Ptr<Ns::CPakStream> Ns::CPakStream::Open(const char* uri)
+Noesis::Ptr<CPakStream> CPakStream::Open(const char* uri)
 {
-	auto handle = gEnv->pCryPak->FOpen(uri, "rb");
-	if (!handle)
-		return nullptr;
+    auto handle = gEnv->pCryPak->FOpen(uri, "rb");
+    if (!handle)
+        return nullptr;
 
-	return Noesis::MakePtr<Ns::CPakStream>(handle);
+    return Noesis::MakePtr<CPakStream>(handle);
 }
 
-void Cry::Ns::CPakStream::Close()
-{
-	if (!m_handle)
-		return;
 
-	gEnv->pCryPak->FClose(m_handle);
-	m_handle = nullptr;
+void CPakStream::Close()
+{
+    if (!m_handle)
+        return;
+
+    gEnv->pCryPak->FClose(m_handle);
+    m_handle = nullptr;
 }

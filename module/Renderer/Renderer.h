@@ -1,10 +1,16 @@
+////////////
+//
+// This has re-factored by Bismarck, original code was written by Sunnlok
+// 
+////////////
 #pragma once
-#include "CryRenderer/IRenderer.h"
-#include "NsRender/RenderDevice.h"
-#include "CryThreading/CryThread.h"
+
+#include <CryRenderer/IRenderer.h>
+#include <NsRender/RenderDevice.h>
+#include <CryThreading/CryThread.h>
 #include <CryRenderer/Pipeline/IPipeline.h>
 #include <atomic>
-#include "CryRenderer/Pipeline/IStageResources.h"
+#include <CryRenderer/Pipeline/IStageResources.h>
 
 
 namespace Noesis
@@ -12,109 +18,101 @@ namespace Noesis
 	struct IView;
 }
 
-namespace Cry
+struct ViewData;
+struct ViewRenderData;
+
+class CRenderTarget;
+
+struct SShaderInfo
 {
-	namespace Ns
-	{
-		struct ViewData;
-		struct ViewRenderData;
+	Noesis::Shader	effectID;
+	uint64	mask;
+	int		layout;
+	_smart_ptr<IShader> pShader;
 
-		class CRenderTarget;
+	bool operator ==(const SShaderInfo& info) { return info.effectID.v == effectID.v; }
+	bool operator ==(::Noesis::Shader id) { return id.v == effectID.v; }
+};
 
-		struct SShaderInfo
-		{
-			::Noesis::Shader	effectID;
-			uint64	mask;
-			int		layout;
-			_smart_ptr<IShader> pShader;	
+using TShaderInfoList = std::vector<SShaderInfo>;
 
-			bool operator ==(const SShaderInfo& info) { return info.effectID.v == effectID.v; }
-			bool operator ==(::Noesis::Shader id) { return id.v == effectID.v; }
-		};
-		using TShaderInfoList = std::vector<SShaderInfo>;
+using TRenderViewDataPtr = std::unique_ptr<ViewRenderData>;
 
-		using TRenderViewDataPtr = std::unique_ptr<ViewRenderData>;
-
-		class CRenderDevice final : public ::Noesis::RenderDevice
-		{
-		public:
-			static CRenderDevice* Get();
+class CRenderDevice final : public ::Noesis::RenderDevice
+{
+public:
+	static CRenderDevice* Get();
 
 
-			CRenderDevice();
-			virtual ~CRenderDevice();
-	
-			//RenderDevice
-			virtual const ::Noesis::DeviceCaps& GetCaps() const override;
-			virtual ::Noesis::Ptr<::Noesis::RenderTarget> CreateRenderTarget(const char* label, uint32_t width, uint32_t height, uint32_t sampleCount, bool needsStencil) override;
-			virtual ::Noesis::Ptr<::Noesis::RenderTarget> CloneRenderTarget(const char* label, ::Noesis::RenderTarget* surface) override;
-			virtual ::Noesis::Ptr<::Noesis::Texture> CreateTexture(const char* label, uint32_t width, uint32_t height, uint32_t numLevels, ::Noesis::TextureFormat::Enum format, const void** data) override;
-			virtual void UpdateTexture(::Noesis::Texture* texture, uint32_t level, uint32_t x, uint32_t y, uint32_t width, uint32_t height, const void* data) override;
+	CRenderDevice();
+	virtual ~CRenderDevice();
 
-			virtual void BeginOffscreenRender() override;
-			virtual void SetRenderTarget(::Noesis::RenderTarget* surface) override;
+	void StartRenderer();
 
-			virtual void ResolveRenderTarget(::Noesis::RenderTarget* surface, const ::Noesis::Tile* tiles, uint32_t numTiles) override;
-			virtual void EndOffscreenRender() override;
+	//RenderDevice
+	const ::Noesis::DeviceCaps& GetCaps() const override;
+	Noesis::Ptr<Noesis::RenderTarget> CreateRenderTarget(const char* label, uint32_t width, uint32_t height, uint32_t sampleCount, bool needsStencil) override;
+	Noesis::Ptr<Noesis::RenderTarget> CloneRenderTarget(const char* label, Noesis::RenderTarget* surface) override;
+	Noesis::Ptr<Noesis::Texture> CreateTexture(const char* label, uint32_t width, uint32_t height, uint32_t numLevels, ::Noesis::TextureFormat::Enum format, const void** data) override;
+	void UpdateTexture(Noesis::Texture* texture, uint32_t level, uint32_t x, uint32_t y, uint32_t width, uint32_t height, const void* data) override;
 
-			/// Begins rendering onscreen commands
-			virtual void BeginOnscreenRender() override;
+	void BeginOffscreenRender() override;
+	void EndOffscreenRender() override;
+	/// Begins rendering onscreen commands
+	void BeginOnscreenRender() override;
 
-			/// Ends rendering onscreen commands
-			virtual void EndOnscreenRender() override;
+	/// Ends rendering onscreen commands
+	void EndOnscreenRender() override;
 
-			virtual void* MapVertices(uint32_t bytes) override;
-			virtual void UnmapVertices() override;
+	void SetRenderTarget(Noesis::RenderTarget* surface) override;
 
-			virtual void* MapIndices(uint32_t bytes) override;
-			virtual void UnmapIndices() override;
+	void ResolveRenderTarget(Noesis::RenderTarget* surface, const ::Noesis::Tile* tiles, uint32_t numTiles) override;
 
+	void* MapVertices(uint32_t bytes) override;
+	void UnmapVertices() override;
 
-			virtual void DrawBatch(const ::Noesis::Batch& batch) override;
-			//~RenderDevice		
+	void* MapIndices(uint32_t bytes) override;
+	void UnmapIndices() override;
 
 
-			void UpdateViewSize(ViewRenderData* perViewData, uint32 width, uint32 height);
+	virtual void DrawBatch(const Noesis::Batch& batch) override;
+	//~RenderDevice		
 
 
-			std::unique_ptr<ViewRenderData> InitializeRenderViewData(ViewData &viewData);
-			void DestroyView(TRenderViewDataPtr pRenderData, ::Noesis::Ptr<::Noesis::IView> pView);
+	void UpdateViewSize(ViewRenderData* perViewData, uint32 width, uint32 height);
 
 
-
-		protected:
-
-
-			void UpdateViewRenderTargets(ViewRenderData* perViewData, int newWidth, int newHeight);
+	std::unique_ptr<ViewRenderData> InitializeRenderViewData(ViewData& viewData);
+	void DestroyView(TRenderViewDataPtr pRenderData, Noesis::Ptr<::Noesis::IView> pView);
+protected:
 
 
+	void UpdateViewRenderTargets(ViewRenderData* perViewData, int newWidth, int newHeight);
 
-			void BeginActualRender();
-			void EndActualRender();
+	void BeginActualRender();
+	void EndActualRender();
 
-			void RT_CheckAndUpdateViewTarget(Cry::Ns::ViewRenderData &ViewData);
+	void RT_CheckAndUpdateViewTarget(ViewRenderData& ViewData);
 
-			void RT_InitializeViewRenderer(ViewRenderData& viewRenderData, ViewData& viewData);
+	void RT_InitializeViewRenderer(ViewRenderData& viewRenderData, ViewData& viewData);
 
-			void RT_DestroyView(ViewRenderData* pRenderViewData);
-			void RT_RenderView(ViewRenderData* pViewData, Cry::Renderer::Pipeline::StageRenderArguments& args);
-			void RT_DestroyView(ViewRenderData* pViewData, Cry::Renderer::Pipeline::StageDestructionsArguments& args);
+	void RT_DestroyView(ViewRenderData* pRenderViewData);
+	void RT_RenderView(ViewRenderData* pViewData, Cry::Renderer::Pipeline::StageRenderArguments& args);
+	void RT_DestroyView(ViewRenderData* pViewData, Cry::Renderer::Pipeline::StageDestructionsArguments& args);
 
-			Cry::Renderer::IStageResourceProvider* m_pResourceProvider;
-
-
-			Cry::Renderer::Pipeline::ICustomPipelinePtr m_pPipeline;
+	Cry::Renderer::IStageResourceProvider* m_pResourceProvider;
 
 
-			ViewRenderData* m_pCurrentView = nullptr;
+	Cry::Renderer::Pipeline::ICustomPipelinePtr m_pPipeline;
 
-			bool m_bRenderingOffscreen = false;
 
-			IShader* m_pNoesisShader;
+	ViewRenderData* m_pCurrentView = nullptr;
 
-			CRenderTarget* m_pCurrentRenderTarget;			
+	bool m_bRenderingOffscreen = false;
 
-			uint32 m_viewID = 0;
-		};
-	}
-}
+	IShader* m_pNoesisShader;
+
+	CRenderTarget* m_pCurrentRenderTarget;
+
+	uint32 m_viewID = 0;
+};

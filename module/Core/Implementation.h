@@ -1,51 +1,45 @@
 #pragma once
+
 #include "Renderer/Renderer.h"
-#include "INoesis.h"
+#include "Interfaces/INoesis.h"
 #include "ViewManager.h"
 
+class CInputHandler;
 
-namespace Cry
+using TViewList = std::vector<Noesis::Ptr<Noesis::IView>>;
+
+class CImplementation final : public INoesis
 {
-namespace Ns
-{
-	using TViewList = std::vector<Noesis::Ptr<Noesis::IView>>;
+public:
+	static CImplementation* Instantiate();
+	static void Destroy();
+	static CImplementation* Get();
+public:
+	CImplementation();
+	~CImplementation();
 
-	class CInputHandler;
+	void Init();
 
-	class CImplementation : public Cry::INoesis
-	{
-	public:
-		static CImplementation* Instantiate();
-		static void Destroy();
-		static CImplementation* Get();
-	public:
-		CImplementation();
-		~CImplementation();
+	void Update(float delta);
+	void UpdateBeforeRender();
+	void OnScreenSizeChanged();
 
-		void Init();
+	void RegisterVariables();
+	void LoadResources();
 
-		void Update(float delta);
-		void UpdateBeforeRender();
-		void OnScreenSizeChanged();
+	bool CreateView(const char* xamlPath, Vec2i dimensions);
 
-		void RegisterVariables();
-		void LoadResources();
+	virtual CViewManager* GetViewManager() const final;
 
-		bool CreateView(const char* xamlPath, Vec2i dimensions);
+	CRenderDevice* GetRenderDevice() const;
 
-		virtual ViewManager* GetViewManager() const final;
-	private:
-		ICVar* m_pResourceDictVar;
+private:
+	ICVar* m_pResourceDictVar;
 
+	Noesis::Ptr<CRenderDevice> m_pRenderDevice;
+	std::unique_ptr<CInputHandler> m_pInputHandler;
+	std::unique_ptr<CViewManager> m_pViewManager;
 
-		float m_lastFrameDelta = 0;
-
-
-		Noesis::Ptr<CRenderDevice> m_pRenderDevice;
-		CTimeValue m_startTime;
-
-		std::unique_ptr<CInputHandler> m_pInputHandler;
-		std::unique_ptr<ViewManager> m_pViewManager;
-	};
-}
-}
+	float m_lastFrameDelta = 0.f;
+	CTimeValue m_startTime;
+};

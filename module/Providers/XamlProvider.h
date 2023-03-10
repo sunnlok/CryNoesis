@@ -1,31 +1,30 @@
+////////////
+//
+// This has re-factored by Bismarck, original code was written by Sunnlok
+// 
+////////////
 #pragma once
-#include <NsGui/CachedFontProvider.h>
+
 #include <NsGui/XamlProvider.h>
 #include <filesystem>
 
-namespace Cry 
+class CXamlProvider final : public Noesis::XamlProvider
 {
-namespace Ns
-{
-	class CXamlProvider final : public Noesis::XamlProvider
-	{
-	public:
-		CXamlProvider();
-		~CXamlProvider();
+public:
+	CXamlProvider();
+	~CXamlProvider();
 
-		virtual Noesis::Ptr<Noesis::Stream> LoadXaml(const Noesis::Uri& uri) override;
+	virtual Noesis::Ptr<Noesis::Stream> LoadXaml(const Noesis::Uri& uri) override;
 
-		void ReloadAllXaml();
-		void ReloadSpecificXaml(const char* uri);
+	void ReloadAllXaml();
+	void ReloadSpecificXaml(const char* uri);
 
-		void AddSearchPath(const char* path);
-		void RemoveSearchPath(const char* path);
-	protected: 
+	void AddSearchPath(const char* path);
+	void RemoveSearchPath(const char* path);
 
-		std::set<std::string> m_xamls;
+protected:
 
-		std::set<std::filesystem::path> m_searchPaths;
-	};
+	std::set<string> m_xamls;
 
-}
-}
+	std::set<std::filesystem::path> m_searchPaths;
+};

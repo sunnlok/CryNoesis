@@ -11,6 +11,7 @@ namespace Cry
 			MainView = 2,
 
 		};
+
 		CRY_CREATE_ENUM_FLAG_OPERATORS(ViewFlags);
 
 		struct ViewDataBase

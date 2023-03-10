@@ -1,25 +1,27 @@
 #include "StdAfx.h"
 #include "TextureProvider.h"
-#include "NsCore/Ptr.h"
-#include "CryRenderer/IRenderer.h"
+
 #include "Renderer/Texture.h"
+#include <CryRenderer/IRenderer.h>
+#include <NsCore/Ptr.h>
+#include <NsGui/Uri.h>
+#include <CryCore/smartptr.h>
 
-
-Noesis::TextureInfo Cry::Ns::CTextureProvider::GetTextureInfo(const Noesis::Uri& uri)
+Noesis::TextureInfo CTextureProvider::GetTextureInfo(const Noesis::Uri& uri)
 {
-	_smart_ptr<ITexture> pTexture;
-	pTexture.Assign_NoAddRef(gEnv->pRenderer->EF_LoadTexture(uri.ToString().Str()));
+	auto pTextureRaw = gEnv->pRenderer->EF_LoadTexture(uri.Str());
+	if (!pTextureRaw)
+		return {0,0};
 
-	if (!pTexture)
-		return { 0, 0 };
+	_smart_ptr<ITexture> pTexture;
+	pTexture.Assign_NoAddRef(pTexture);
 
 	return { (uint32)pTexture->GetWidth(), (uint32)pTexture->GetHeight() };
 }
 
-Noesis::Ptr<Noesis::Texture> Cry::Ns::CTextureProvider::LoadTexture(const Noesis::Uri& uri, Noesis::RenderDevice* device)
+Noesis::Ptr<Noesis::Texture> CTextureProvider::LoadTexture(const Noesis::Uri& uri, Noesis::RenderDevice* device)
 {
-
-	auto pTextureRaw = gEnv->pRenderer->EF_LoadTexture(uri.ToString().Str());
+	auto pTextureRaw = gEnv->pRenderer->EF_LoadTexture(uri.Str());
 	if (!pTextureRaw)
 		return nullptr;
 
@@ -28,4 +30,3 @@ Noesis::Ptr<Noesis::Texture> Cry::Ns::CTextureProvider::LoadTexture(const Noesis
 
 	return Noesis::MakePtr<CTextureWrapper>(std::move(pTexture));
 }
-

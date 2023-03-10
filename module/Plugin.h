@@ -1,49 +1,38 @@
+// Copyright 2016-2018 Crytek GmbH / Crytek Group. All rights reserved.
 #pragma once
 
 #include <CrySystem/ICryPlugin.h>
-#include "CrySystem/ISystem.h"
-#include "INoesisPlugin.h"
 
-namespace Cry
+#include <CryGame/IGameFramework.h>
+
+#include <CryEntitySystem/IEntityClass.h>
+#include "Interfaces/INoesisPlugin.h"
+
+class CImplementation;
+
+class CPlugin 
+	: public INoesisPlugin
+	, public ISystemEventListener
 {
-namespace Ns
-{
-	class CImplementation;
-	class CPlugin final : public Cry::INoesisPlugin, public ISystemEventListener
-	{
-	public:
+public:
+	CRYINTERFACE_SIMPLE(Cry::IEnginePlugin)
+	CRYGENERATE_SINGLETONCLASS_GUID(CPlugin, "MyPlugin", "{C08C1286-5304-45D7-A0F8-F90D01A758FA}"_cry_guid)
 
-		CRYINTERFACE_BEGIN()
-			CRYINTERFACE_ADD(Cry::INoesisPlugin)
-			CRYINTERFACE_ADD(Cry::IEnginePlugin)
-		CRYINTERFACE_END()
+	virtual ~CPlugin();
+	
+	// Cry::IEnginePlugin
+	virtual bool Initialize(SSystemGlobalEnvironment& env, const SSystemInitParams& initParams) override;
+	// ~Cry::IEnginePlugin
+	
+	virtual void MainUpdate(float delta) override;
+	virtual void UpdateBeforeRender() override;
 
-		CRYGENERATE_SINGLETONCLASS_GUID(CPlugin, "CryNoesis", "{f458414f-ce8c-40f3-bc0a-e0f69cc3f55c}"_cry_guid)
 
-		PLUGIN_FLOWNODE_REGISTER
-		PLUGIN_FLOWNODE_UNREGISTER;
+	// ISystemEventListener
+	virtual void OnSystemEvent(ESystemEvent event, UINT_PTR wparam, UINT_PTR lparam) override;
+	// ~ISystemEventListener
 
-		virtual ~CPlugin();
+	CImplementation* GetImpl();
 
-		//! Retrieve name of plugin.
-		virtual const char* GetName() const override { return "CryNoesis"; }
-
-		//! Retrieve category for the plugin.
-		virtual const char* GetCategory() const override { return "UI"; }
-
-		//! This is called to initialize the new plugin.
-		virtual bool Initialize(SSystemGlobalEnvironment& env, const SSystemInitParams& initParams) override;
-
-		virtual void MainUpdate(float delta) override;
-		virtual void UpdateBeforeRender() override;
-
-		CImplementation* GetImpl();
-
-		INoesis* GetNoesis() final;
-
-		virtual void OnSystemEvent(ESystemEvent event, UINT_PTR wparam, UINT_PTR lparam) override;
-
-	};
-
-}
-}
+	INoesis* GetNoesis() final;
+};

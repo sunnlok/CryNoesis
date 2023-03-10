@@ -1,12 +1,13 @@
 #include "StdAfx.h"
+
 #include "XamlProvider.h"
-#include "NsCore/Ptr.h"
+
+#include <NsCore/Ptr.h>
 #include "FileProvider.h"
-//#include <filesystem>
-#include "CrySystem/ConsoleRegistration.h"
+#include <CrySystem/ConsoleRegistration.h>
+#include <CrySystem/File/ICryPak.h>
 
-
-static Cry::Ns::CXamlProvider* g_pProvider = nullptr;
+static CXamlProvider* g_pProvider = nullptr;
 
 static void ReloadAllCMD(IConsoleCmdArgs* args)
 {
@@ -40,8 +41,7 @@ static void RemoveSearchPathCMD(IConsoleCmdArgs* args)
 	g_pProvider->RemoveSearchPath(args->GetArg(1));
 }
 
-
-Cry::Ns::CXamlProvider::CXamlProvider()
+CXamlProvider::CXamlProvider()
 {
 	ConsoleRegistrationHelper::AddCommand("Noesis.ReloadAll", &ReloadAllCMD, 0, "Reloads all loaded xamls");
 	ConsoleRegistrationHelper::AddCommand("Noesis.Reload", &ReloadCMD, 0, "Reloads a specific loaded xamls");
@@ -52,15 +52,14 @@ Cry::Ns::CXamlProvider::CXamlProvider()
 	g_pProvider = this;
 }
 
-Cry::Ns::CXamlProvider::~CXamlProvider()
+CXamlProvider::~CXamlProvider()
 {
 	g_pProvider = nullptr;
 }
 
-
-Noesis::Ptr<Noesis::Stream> Cry::Ns::CXamlProvider::LoadXaml(const Noesis::Uri& uri)
+Noesis::Ptr<Noesis::Stream> CXamlProvider::LoadXaml(const Noesis::Uri& uri)
 {
-	std::filesystem::path  path = std::filesystem::u8path(uri.ToString()).make_preferred();
+	std::filesystem::path  path = std::filesystem::u8path(uri.Str()).make_preferred();
 
 	if (!path.has_extension())
 		path += std::filesystem::path(".xaml");
@@ -86,34 +85,32 @@ Noesis::Ptr<Noesis::Stream> Cry::Ns::CXamlProvider::LoadXaml(const Noesis::Uri& 
 	}
 
 	if (pStream.GetPtr())
-		m_xamls.emplace(uri.ToString().Str());
+		m_xamls.emplace(uri.Str());
 
 	return pStream;
 }
 
-void Cry::Ns::CXamlProvider::ReloadAllXaml()
+void CXamlProvider::ReloadAllXaml()
 {
 	for (auto& xaml : m_xamls)
 		RaiseXamlChanged(xaml.c_str());
 }
 
-void Cry::Ns::CXamlProvider::ReloadSpecificXaml(const char* uri)
+void CXamlProvider::ReloadSpecificXaml(const char* uri)
 {
 	auto xaml = m_xamls.find(uri);
 	if (xaml != m_xamls.end())
 		RaiseXamlChanged(xaml->c_str());
 }
 
-void Cry::Ns::CXamlProvider::AddSearchPath(const char* uri)
+void CXamlProvider::AddSearchPath(const char* uri)
 {
 	std::filesystem::path  path = std::filesystem::u8path(uri).make_preferred();
-	
 	m_searchPaths.emplace(path);
 }
 
-void Cry::Ns::CXamlProvider::RemoveSearchPath(const char* uri)
+void CXamlProvider::RemoveSearchPath(const char* uri)
 {
 	std::filesystem::path  path = std::filesystem::u8path(uri).make_preferred();
 	m_searchPaths.erase(path);
 }
-

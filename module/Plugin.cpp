@@ -1,45 +1,55 @@
+// Copyright 2016-2017 Crytek GmbH / Crytek Group. All rights reserved.
 #include "StdAfx.h"
 #include "Plugin.h"
 
-#include <CryCore/Platform/platform_impl.inl>
+#include "Core/Handlers.h"
 #include "Core/Implementation.h"
-#include "CrySchematyc/Env/EnvPackage.h"
-#include "CrySchematyc/ICore.h"
-#include "CrySchematyc/Env/IEnvRegistry.h"
 
-Cry::Ns::CPlugin::~CPlugin()
+#include <CrySchematyc/Env/IEnvRegistry.h>
+#include <CrySchematyc/Env/EnvPackage.h>
+#include <CrySchematyc/Utils/SharedString.h>
+
+// Included only once per DLL module.
+#include <CryCore/Platform/platform_impl.inl>
+
+#include <NsGui/IntegrationAPI.h>
+
+
+CPlugin::~CPlugin()
 {
 	gEnv->pSystem->GetISystemEventDispatcher()->RemoveListener(this);
+
+	if (gEnv->pSchematyc)
+	{
+		gEnv->pSchematyc->GetEnvRegistry().DeregisterPackage(CPlugin::GetCID());
+	}
 	CImplementation::Destroy();
 }
 
-bool Cry::Ns::CPlugin::Initialize(SSystemGlobalEnvironment& env, const SSystemInitParams& initParams)
+bool CPlugin::Initialize(SSystemGlobalEnvironment& env, const SSystemInitParams& initParams)
 {
+	gEnv->pSystem->GetISystemEventDispatcher()->RegisterListener(this,"CPlugin");
+
 	if (!CImplementation::Instantiate())
 		return false;
 
-	gEnv->pSystem->GetISystemEventDispatcher()->RegisterListener(this, "Noesis Plugin");
+	EnableUpdate(IEnginePlugin::EUpdateStep::BeforeRender, true);
+	EnableUpdate(IEnginePlugin::EUpdateStep::MainUpdate, true);
 
 	return true;
 }
 
-Cry::Ns::CImplementation* Cry::Ns::CPlugin::GetImpl()
-{	
-	return CImplementation::Get();
-}
-
-void Cry::Ns::CPlugin::MainUpdate(float delta)
+void CPlugin::MainUpdate(float delta)
 {
 	CImplementation::Get()->Update(delta);
 }
 
-void Cry::Ns::CPlugin::UpdateBeforeRender()
+void CPlugin::UpdateBeforeRender()
 {
-
 	CImplementation::Get()->UpdateBeforeRender();
 }
 
-void Cry::Ns::CPlugin::OnSystemEvent(ESystemEvent event, UINT_PTR wparam, UINT_PTR lparam)
+void CPlugin::OnSystemEvent(ESystemEvent event, UINT_PTR wparam, UINT_PTR lparam)
 {
 	switch (event)
 	{
@@ -65,12 +75,10 @@ void Cry::Ns::CPlugin::OnSystemEvent(ESystemEvent event, UINT_PTR wparam, UINT_P
 			);
 		}
 	}
+	break;
 	case ESYSTEM_EVENT_CRYSYSTEM_INIT_DONE:
 	{
 		CImplementation::Get()->Init();
-
-		EnableUpdate(IEnginePlugin::EUpdateStep::BeforeRender, true);
-		EnableUpdate(IEnginePlugin::EUpdateStep::MainUpdate, true);
 	}
 	break;
 	case ESYSTEM_EVENT_DISPLAY_CHANGED:
@@ -81,9 +89,14 @@ void Cry::Ns::CPlugin::OnSystemEvent(ESystemEvent event, UINT_PTR wparam, UINT_P
 	}
 }
 
-Cry::INoesis* Cry::Ns::CPlugin::GetNoesis()
+CImplementation* CPlugin::GetImpl()
 {
 	return CImplementation::Get();
 }
 
-CRYREGISTER_SINGLETON_CLASS(Cry::Ns::CPlugin)
+INoesis* CPlugin::GetNoesis()
+{
+	return CImplementation::Get();
+}
+
+CRYREGISTER_SINGLETON_CLASS(CPlugin)

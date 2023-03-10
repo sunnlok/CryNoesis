@@ -1,59 +1,38 @@
 #include "StdAfx.h"
+
 #include "Implementation.h"
-#include <NsCore/Noesis.h>
-#include <NsGui/IntegrationAPI.h>
-#include <NsCore/Memory.h>
 
 #include "Handlers.h"
 #include "Providers/XamlProvider.h"
 #include "Providers/TextureProvider.h"
 #include "Providers/FontProvider.h"
-#include <NsGui/IView.h>
-#include <NsGui/IRenderer.h>
-#include "NsGui/FrameworkElement.h"
-#include "CrySystem/ConsoleRegistration.h"
-#include <NsGui/ResourceDictionary.h>
-#include "CryRenderer/IRenderAuxGeom.h"
-#include <NsCore/RegisterComponent.h>
-#include "Controls/ViewContainer.h"
 #include "InputHandler.h"
-#include "ComponentRegistration.h"
-#include "ViewManager.h"
+#include "Controls/ViewContainer.h"
 
-static std::unique_ptr<Cry::Ns::CImplementation> g_pImplementation;
+#include <CrySystem/ConsoleRegistration.h>
 
-Cry::Ns::CImplementation* Cry::Ns::CImplementation::Instantiate()
+static std::unique_ptr<CImplementation> g_pImplementation;
+
+
+CImplementation* CImplementation::Instantiate()
 {
 	if (g_pImplementation)
 		return g_pImplementation.get();
 
-	g_pImplementation = std::make_unique<Cry::Ns::CImplementation>();
+	g_pImplementation = std::make_unique<CImplementation>();
 	return g_pImplementation.get();
 }
 
-void Cry::Ns::CImplementation::Destroy()
+void CImplementation::Destroy()
 {
 	if (g_pImplementation)
 		g_pImplementation.release();
 }
 
-Cry::Ns::CImplementation* Cry::Ns::CImplementation::Get()
+CImplementation* CImplementation::Get()
 {
 	return g_pImplementation.get();
 }
-
-//////////////////////////////////////////////////////////////////////////
-
-using namespace Cry;
-
-static Noesis::MemoryCallbacks g_memCallbacks = {
-	nullptr,
-	&Ns::Detail::Allocator::Alloc,
-	&Ns::Detail::Allocator::ReAlloc,
-	&Ns::Detail::Allocator::DeAlloc,
-	&Ns::Detail::Allocator::AllocSize
-};
-
 
 static void LoadXamlCmd(IConsoleCmdArgs* pArgs)
 {
@@ -65,115 +44,112 @@ static void LoadXamlCmd(IConsoleCmdArgs* pArgs)
 
 static void PlaySound(void* user, const Noesis::Uri& filename, float volume)
 {
-	auto actualFilename = PathUtil::GetFileName(filename.ToString().Str());
+	auto actualFilename = PathUtil::GetFileName(filename.Str());
 	auto triggerID = CryAudio::StringToId(actualFilename);
 
 	gEnv->pAudioSystem->ExecuteTrigger(triggerID);
 }
 
-Cry::Ns::CImplementation::CImplementation()
+static Noesis::MemoryCallbacks g_memCallbacks = {
+	nullptr,
+	&Allocator::Alloc,
+	&Allocator::ReAlloc,
+	&Allocator::DeAlloc,
+	&Allocator::AllocSize
+};
+
+CImplementation::CImplementation()
+	: m_pResourceDictVar(nullptr)
 {
 	RegisterVariables();
-	
-	m_pViewManager = std::make_unique<ViewManager>();
 
-	using namespace Noesis;
+	m_pViewManager = std::make_unique<CViewManager>();
 
 	Noesis::SetMemoryCallbacks(g_memCallbacks);
+	Noesis::SetErrorHandler(&ErrorHandler);
+	Noesis::SetLogHandler(&LogHandler);
+	Noesis::SetAssertHandler(&AssertHandler);
 
-	Noesis::SetErrorHandler(&Ns::Detail::ErrorHandler);
+	Noesis::SetLicense(NS_LICENSE_NAME, NS_LICENSE_KEY);
 
+	Noesis::GUI::Init();
 
-	Noesis::SetLogHandler(&Ns::Detail::LogHandler);
-	Noesis::SetAssertHandler(&Ns::Detail::AssertHandler);
+	Noesis::GUI::SetXamlProvider(Noesis::MakePtr<CXamlProvider>());
+	Noesis::GUI::SetFontProvider(Noesis::MakePtr<CFontProvider>());
+	Noesis::GUI::SetTextureProvider(Noesis::MakePtr<CTextureProvider>());
 
-	GUI::SetLicense("Bismarck", "pdrTp1uR06fdOOevw+ayewv8c0jv6Ej4Upj+3kl2mIuD7Ert");
-
-	GUI::Init();
-	{
-		using namespace Noesis::GUI;
-
-		SetXamlProvider(MakePtr<Ns::CXamlProvider>());
-		SetFontProvider(MakePtr<Ns::CFontProvider>());
-		SetTextureProvider(MakePtr<Ns::CTextureProvider>());
-	}
 	const char* fonts[] = { "Segoe UI Emoji" };
 	//GUI::LoadApplicationResources("MenuResources.xaml");
-	Noesis::GUI::SetFontFallbacks( fonts, 1 );
-	Noesis::GUI::SetFontDefaultProperties(15, FontWeight_Normal, FontStretch_Normal, FontStyle_Normal);
+	Noesis::GUI::SetFontFallbacks(fonts, 1);
+	Noesis::GUI::SetFontDefaultProperties(15, Noesis::FontWeight_Normal, Noesis::FontStretch_Normal, Noesis::FontStyle_Normal);
 
-	Noesis::RegisterComponent<Cry::Ns::Components::ViewContainer>();
-	Cry::Ns::Registration::RegisterInteractivityComponents();
+	Noesis::RegisterComponent<ViewContainer>();
+
 	Noesis::GUI::SetPlayAudioCallback(nullptr, PlaySound);
-
 	LoadResources();
 }
 
-Cry::Ns::CImplementation::~CImplementation()
+CImplementation::~CImplementation()
 {
-	m_pViewManager.reset();
-
+	g_pImplementation.reset();
 	Noesis::GUI::Shutdown();
 }
 
-void Cry::Ns::CImplementation::RegisterVariables()
+void CImplementation::Init()
 {
-	ConsoleRegistrationHelper::AddCommand("Noesis.LoadXaml", &LoadXamlCmd);
-
-
-	m_pResourceDictVar = ConsoleRegistrationHelper::RegisterString("Noesis.ResourceDictionary", "", 0, "Resource dictionary to load at startup.");
-
-}
-
-void Cry::Ns::CImplementation::LoadResources()
-{
-	//Make this able to be compiled in
-	string resources = m_pResourceDictVar->GetString();
-
-	Noesis::GUI::LoadApplicationResources(resources);
-}
-
-void Cry::Ns::CImplementation::Init()
-{
-	
 	m_startTime = gEnv->pTimer->GetFrameStartTime();
 	m_pInputHandler = std::make_unique<CInputHandler>(this);
 
-	m_pRenderDevice.Reset(new Cry::Ns::CRenderDevice());
+	m_pRenderDevice.Reset(new CRenderDevice());
+
+	m_pRenderDevice->StartRenderer();
 }
 
-void Cry::Ns::CImplementation::Update(float delta)
+void CImplementation::Update(float delta)
 {
-	
 }
 
-void Cry::Ns::CImplementation::UpdateBeforeRender()
+void CImplementation::UpdateBeforeRender()
 {
 	auto curTime = gEnv->pTimer->GetFrameStartTime() - m_startTime;
 
+	if (!m_pViewManager)
+		return;
 
 	for (auto& view : m_pViewManager->GetViews())
 	{
-		view.pView->Update(curTime.GetSeconds());
+		view.second.pView->Update(curTime.GetSeconds());
 	}
-		
 }
 
-void Cry::Ns::CImplementation::OnScreenSizeChanged()
+void CImplementation::OnScreenSizeChanged()
 {
-	m_pViewManager->NotifyRendererSizeChange();
-		
 }
 
-bool Cry::Ns::CImplementation::CreateView(const char* xamlPath, Vec2i dimensions)
+void CImplementation::RegisterVariables()
+{
+	ConsoleRegistrationHelper::AddCommand("Noesis.LoadXaml", &LoadXamlCmd);
+	m_pResourceDictVar = ConsoleRegistrationHelper::RegisterString("Noesis.ResourceDictionary", "", 0, "Resource dictionary to load at startup.");
+}
+
+void CImplementation::LoadResources()
+{
+	string resources = m_pResourceDictVar->GetString();
+	Noesis::GUI::LoadApplicationResources(resources.c_str());
+}
+
+bool CImplementation::CreateView(const char* xamlPath, Vec2i dimensions)
 {
 	m_pViewManager->CreateViewFromXaml(xamlPath);
-
 	return true;
 }
 
-Cry::Ns::ViewManager* Cry::Ns::CImplementation::GetViewManager() const
+CViewManager* CImplementation::GetViewManager() const
 {
 	return &*m_pViewManager;
 }
 
+CRenderDevice* CImplementation::GetRenderDevice() const
+{
+	return &*m_pRenderDevice;
+}

@@ -1,53 +1,45 @@
 #pragma once
-#include "NsCore/Ptr.h"
-#include "IViewManager.h"
 
-namespace Noesis
+#include "Interfaces/IViewManager.h"
+#include "Renderer/ViewRenderData.h"
+
+#include <NsCore/Ptr.h>
+#include <NsGui/IView.h>
+
+struct ViewRenderData;
+
+struct ViewData : ViewDataBase
 {
-	struct IView;
-}
+	Noesis::Ptr<::Noesis::IView> pView;
 
-namespace Cry::Ns
+	std::unique_ptr<ViewRenderData> pViewRenderData;
+};
+
+class CViewManager final : public IViewManager
 {
-	struct ViewRenderData;
+public:
+	CViewManager();
+	~CViewManager();
 
-	struct ViewData : ViewDataBase
-	{
-		::Noesis::Ptr<::Noesis::IView> pView;
+	static CViewManager* Get();
 
-		std::unique_ptr<ViewRenderData> pViewRenderData;
-	};
+	void CreateViewFromXaml(const char* uri);
+	void RemoveView(uint16 viewID);
+	void NotifyRendererSizeChange();
 
-	class ViewManager final : public IViewManager
-	{
-	public:
-		static ViewManager* Get();
+	virtual const ViewDataBase* GetViewData(uint16 viewId) override;
+	virtual const ViewDataBase* FindViewData(const char* name) override;
 
-		ViewManager();
-		~ViewManager();
+	void ActivateView(uint16 viewID, bool bActivate = true);
+	virtual void ActivateView(const ViewDataBase& view, bool bActivate = true) override;
 
-		void CreateViewFromXaml(const char* uri);
+	const std::map<const char*, ViewData>& GetViews() { return m_views; }
+private:
+	uint16 m_nextID = 1;
 
-		void RemoveView(uint16 viewID);
+	ViewData& CreateNewViewData(const char* name);
 
-		void NotifyRendererSizeChange();
-
-		void SetViewActivated(uint16 viewID, bool bActivated);
-
-		void SetViewActivated(const ViewDataBase& view, bool bActivated) final;
-
-		const ViewData* GetViewData(uint16 viewID) final;
-		const ViewData* FindViewData(const char* name) final;
-
-		const std::vector<ViewData>& GetViews() { return m_views; }
-	protected:
-		ViewData& CreateNewViewData();
-		
-
-		std::vector<ViewData> m_views;
+	std::map<const char*, ViewData> m_views;
 
 
-		std::vector<uint16> m_freeIds;
-		uint16 m_nextID = 1;
-	};
-}
+};
