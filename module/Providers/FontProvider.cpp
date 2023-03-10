@@ -6,7 +6,7 @@
 
 void CFontProvider::ScanFolder(const Noesis::Uri& folder)
 {
-	CryLogAlways("%s/Fonts", folder.Str());
+	CryLogAlways("%s", folder.Str());
 
 	ScanFolder(folder, "otf");
 	ScanFolder(folder, "ttf");
@@ -26,7 +26,7 @@ void CFontProvider::ScanFolder(const Noesis::Uri& folder, const char* ext)
 {
 	stack_string path;
 	const char* rootPath = "."; //Make cvar
-	path.Format("%s/%s/*.%s", rootPath, folder.Str(), ext);
+	path.Format("%s/%s/*.%s/", rootPath, folder.Str(), ext);
 
 	_finddata_t findData;
 	auto handle = gEnv->pCryPak->FindFirst(path.c_str(), &findData);

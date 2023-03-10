@@ -124,6 +124,7 @@ void CImplementation::UpdateBeforeRender()
 
 void CImplementation::OnScreenSizeChanged()
 {
+	m_pViewManager->NotifyRendererSizeChange();
 }
 
 void CImplementation::RegisterVariables()

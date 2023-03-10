@@ -77,8 +77,8 @@ void CViewManager::CreateViewFromXaml(const char* uri)
 		return;
 	}
 
-	auto& view = CreateNewViewData(pXaml->GetName());
-	view.name = pXaml->GetName();
+	auto& view = CreateNewViewData(pXaml->ToString().Str());
+	view.name = pXaml->ToString().Str();
 
 	view.viewHeight = (uint32)gEnv->pRenderer->GetHeight();
 	view.viewWidth = (uint32)gEnv->pRenderer->GetWidth();
@@ -88,49 +88,114 @@ void CViewManager::CreateViewFromXaml(const char* uri)
 	view.pView->SetSize(view.viewWidth, view.viewHeight);
 	view.flags = ViewFlags::MainView | ViewFlags::ScaleWithView;
 
-
+	auto pRenderData = CRenderDevice::Get()->InitializeRenderViewData(view);
+	view.pViewRenderData = std::move(pRenderData);
+	view.pView->Activate();
 }
 
 void CViewManager::RemoveView(uint16 viewID)
 {
+	for (auto& it : m_views)
+	{
+		if (it.second.id == viewID)
+		{
+			auto pViewRenderData = std::move(it.second.pViewRenderData);
+			it.second.pView->Deactivate();
+			CRenderDevice::Get()->DestroyView(std::move(pViewRenderData), it.second.pView);
+
+			m_views.erase(it.first);
+		}
+	}
 }
 
 void CViewManager::NotifyRendererSizeChange()
 {
+	uint32 newWidth = (uint32)gEnv->pRenderer->GetWidth();
+	uint32 newHeight = (uint32)gEnv->pRenderer->GetHeight();
+
+	for (auto& view : m_views)
+	{
+		if ((view.second.flags & ViewFlags::MainView) == 0 || (view.second.flags & ViewFlags::ScaleWithView) == 0)
+			continue;
+		
+		if (view.second.viewWidth == newWidth || view.second.viewHeight == newHeight)
+			continue;
+
+		view.second.viewWidth = newWidth;
+		view.second.viewHeight = newHeight;
+
+		view.second.pView->SetSize(newWidth, newHeight);
+		CRenderDevice::Get()->UpdateViewSize(&*view.second.pViewRenderData, newWidth, newHeight);
+	}
 }
 
 const ViewDataBase* CViewManager::GetViewData(uint16 viewId)
 {
+	for (auto& it : m_views)
+	{
+		if (it.second.id == viewId)
+		{
+			return &it.second;
+		}
+	}
 	return nullptr;
 }
 
 const ViewDataBase* CViewManager::FindViewData(const char* name)
 {
+
+	for (auto& it : m_views)
+	{
+		if (it.first == name)
+		{
+			return &it.second;
+		}
+	}
 	return nullptr;
 }
 
 void CViewManager::ActivateView(uint16 viewID, bool bActivated)
 {
+	if (!viewID)
+		return;
+	
+	for (auto& it : m_views)
+	{
+		if (it.second.id == viewID)
+		{
+			return ActivateView(it.second, bActivated);
+		}
+	}
+
 }
 
-void CViewManager::ActivateView(const ViewDataBase& view, bool bActivate)
+void CViewManager::ActivateView(const ViewDataBase& viewBase, bool bActivate)
 {
+	auto& view = static_cast<const ViewData&>(viewBase);
+
+	if (!view.pView.GetPtr())
+		return;
+
+	if (bActivate)
+		view.pView->Activate();
+	else
+		view.pView->Deactivate();
 }
 
 ViewData& CViewManager::CreateNewViewData(const char* name)
 {
 	if (m_nextID != 0)
 	{
-		auto newId = m_nextID++;
-		m_views[name] = ViewData{};
-
 		ViewData& view = m_views[name];
-		view.id = newId;
+		view.id = m_nextID++;
+
 		return view;
 	}
 
-	ViewData& view = m_views[name];
-	view.id = m_nextID++;
+	auto newId = m_nextID++;
+	m_views[name] = ViewData{};
 
+	ViewData& view = m_views[name];
+	view.id = newId;
 	return view;
 }

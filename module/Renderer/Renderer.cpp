@@ -60,7 +60,8 @@ static void RegisterSamplers(Cry::Renderer::IStageResourceProvider* pResourcePro
 
 static void RegisterLayouts(Cry::Renderer::IStageResourceProvider* pResourceProvider)
 {
-	for (int i = 0; i < g_layoutInfoList.size(); ++i)
+	//g_layoutInfoList.size()
+	for (int i = 0; i < 20; ++i)
 	{
 		auto& layoutInfo = g_layoutInfoList[i];
 		auto& shaderInfo = g_shaderInfo[i];
@@ -85,15 +86,7 @@ CRenderDevice* CRenderDevice::Get()
 CRenderDevice::CRenderDevice()
 {
 	g_pRenderDevice = this;
-}
 
-CRenderDevice::~CRenderDevice()
-{
-	g_pRenderDevice = nullptr;
-}
-
-void CRenderDevice::StartRenderer()
-{
 	m_pPipeline = Cry::Renderer::Pipeline::GetOrCreateCustomPipeline();
 	m_pResourceProvider = m_pPipeline->GetResourceProvider();
 
@@ -103,6 +96,15 @@ void CRenderDevice::StartRenderer()
 		RegisterSamplers(m_pResourceProvider);
 		RegisterLayouts(m_pResourceProvider);
 		});
+}
+
+CRenderDevice::~CRenderDevice()
+{
+	g_pRenderDevice = nullptr;
+}
+
+void CRenderDevice::StartRenderer()
+{
 }
 
 static ::Noesis::DeviceCaps g_Capabilities{
@@ -207,10 +209,12 @@ void CRenderDevice::UpdateTexture(Noesis::Texture* texture, uint32_t level, uint
 
 void CRenderDevice::BeginOffscreenRender()
 {
+	m_pPipeline->RT_BeginPass(*m_pCurrentView->stage, m_pCurrentView->viewPass);
 }
 
 void CRenderDevice::EndOffscreenRender()
 {
+	m_pPipeline->RT_EndPass(*m_pCurrentView->stage, true);
 }
 
 void CRenderDevice::BeginOnscreenRender()
@@ -285,6 +289,9 @@ void CRenderDevice::UnmapIndices()
 
 void CRenderDevice::DrawBatch(const::Noesis::Batch& batch)
 {
+
+	CryLogAlways("Drawing Batch");
+
 	using namespace Cry::Renderer::Pipeline::Pass;
 
 	auto& info = g_shaderInfo[batch.shader.v];
@@ -545,7 +552,7 @@ void CRenderDevice::RT_CheckAndUpdateViewTarget(ViewRenderData& ViewData)
 
 void CRenderDevice::RT_InitializeViewRenderer(ViewRenderData& viewRenderData, ViewData& viewData)
 {
-	/*Cry::Renderer::Pipeline::SStageCallbacks callbacks{
+	Cry::Renderer::Pipeline::SStageCallbacks callbacks{
 		[pView = &viewRenderData, this](Cry::Renderer::Pipeline::StageRenderArguments& args) { RT_RenderView(pView, args); },
 		nullptr,
 		[pView = &viewRenderData, this](Cry::Renderer::Pipeline::StageDestructionsArguments& args) { RT_DestroyView(pView, args); }
@@ -588,7 +595,7 @@ void CRenderDevice::RT_InitializeViewRenderer(ViewRenderData& viewRenderData, Vi
 	auto pRenderer = viewData.pView->GetRenderer();
 
 	pRenderer->Init(this);
-	viewRenderData.pNsRenderer = pRenderer;*/
+	viewRenderData.pNsRenderer = pRenderer;
 }
 
 void CRenderDevice::RT_DestroyView(ViewRenderData* pRenderViewData)
