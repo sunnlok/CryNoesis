@@ -63,8 +63,8 @@ static void RegisterLayouts(Cry::Renderer::IStageResourceProvider* pResourceProv
 	//g_layoutInfoList.size()
 	for (int i = 0; i < 20; ++i)
 	{
-		auto& layoutInfo = g_layoutInfoList[i];
-		auto& shaderInfo = g_shaderInfo[i];
+		const SShaderDescInfo& layoutInfo = g_layoutInfoList[i];
+		SShaderInfo& shaderInfo = g_shaderInfo[i];
 		shaderInfo.effectID = layoutInfo.shader;
 
 		std::visit([&shaderInfo, pResourceProvider](auto& descs) {
